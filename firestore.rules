@@ -1,20 +1,97 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // --- Reusable Functions ---
+    function isRole(role) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+
+    function currentUser() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isFacultyInHodDepartment(facultyUserId) {
+      let facultyPath = /databases/$(database)/documents/users/$(facultyUserId);
+      return exists(facultyPath) &&
+             get(facultyPath).data.role == 'Faculty' &&
+             get(facultyPath).data.primaryDepartment == currentUser().department;
+    }
+    
+    // --- Collection Rules ---
+
+    // USERS: Combined rules for HOD and individual access
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow list: if isRole('HOD');
+      allow read: if request.auth.uid == userId || (isRole('HOD') && isFacultyInHodDepartment(userId));
+      allow write: if (request.auth.uid == userId) || (
+        isRole('HOD') &&
+        isFacultyInHodDepartment(userId) &&
+        request.resource.data.primaryDepartment == '' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['primaryDepartment'])
+      );
+      
+      // Users can create/update/delete their own document
+      allow create, delete: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId;
+      
+      // Allow HOD to remove a faculty from their department by clearing primaryDepartment
+      allow update: if isRole('HOD') && 
+                     isFacultyInHodDepartment(userId) &&
+                     request.resource.data.primaryDepartment == '' &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['primaryDepartment']);
     }
 
-    // Rules for activities collection
+    // ACTIVITIES: Combined rules for all user types
     match /activities/{activityId} {
-      allow read;
-      allow write: if request.auth != null;
+      allow read, list: if request.auth != null;
+      allow create: if isRole('Faculty');
+      
+      // Faculty can update/delete their own activities
+      allow update, delete: if isRole('Faculty') && resource.data.facultyId == request.auth.uid;
+      
+      // Specific updates for rating and status
+      allow update: if request.auth != null && 
+                  request.resource.data.diff(resource.data).affectedKeys().hasOnly(['averageRating', 'totalRatings', 'lastUpdated']);
+      allow update: if request.auth != null && 
+                  request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'lastUpdated']) &&
+                  request.resource.data.status == 'submitted';
     }
 
-    // Rules for feedback collection
+    // FEEDBACK: Combined rules for all user types
     match /feedback/{feedbackId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
+      allow list: if isRole('HOD') || isRole('Faculty');
+
+      function isHodAuthorized() {
+        let activityId = resource.data.activityId;
+        let activityPath = /databases/$(database)/documents/activities/$(activityId);
+        return exists(activityPath) && isRole('HOD') && isFacultyInHodDepartment(get(activityPath).data.facultyId);
+      }
+
+      allow read: if request.auth.uid == resource.data.studentId ||
+                     get(/databases/$(database)/documents/activities/$(resource.data.activityId)).data.facultyId == request.auth.uid ||
+                     isHodAuthorized();
+      
+      // Student-specific create rule with department check
+      allow create: if isRole('Student') &&
+        get(/databases/$(database)/documents/activities/$(request.resource.data.activityId)).data.departments.hasAny(
+          currentUser().departments
+        );
+      
+      // Student/Faculty update and delete rules
+      allow update, delete: if request.auth != null && (
+        resource.data.studentId == request.auth.uid ||
+        get(/databases/$(database)/documents/activities/$(resource.data.activityId)).data.facultyId == request.auth.uid
+      );
+    }
+
+    // NOTIFICATIONS: Standard rules
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && (
+        request.resource.data.userId == request.auth.uid || isRole("Faculty")
+      );
       allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }

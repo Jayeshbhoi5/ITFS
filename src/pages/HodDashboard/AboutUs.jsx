@@ -1,51 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { FaEnvelope, FaPhone } from 'react-icons/fa';
-import Navbar from './FacultyDashboard/Navbar';
-import Sidebar from './FacultyDashboard/Sidebar';
-import { Link } from 'react-router-dom';
-import { useUserSession } from '../UserSessionContext';
-import DepartmentSelectionModal from '../components/DepartmentSelectionModal';
+import Navbar from './Navbar';
+import Sidebar from './Sidebar';
+import { useUserSession } from '../../UserSessionContext';
+import { getDarkModeFromStorage, setDarkModeInStorage } from '../FacultyDashboard/darkModeUtils';
 
-const AboutUs = () => {
-  // Initialize dark mode state safely
-  const [darkMode, setDarkMode] = useState(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const savedMode = localStorage.getItem('darkMode');
-        if (savedMode === null) return false;
-        return JSON.parse(savedMode);
-      }
-    } catch (e) {
-      console.error("Error parsing darkMode from localStorage:", e);
-      localStorage.removeItem('darkMode'); // Clean up invalid value
-    }
-    return false;
-  });
-
+const HodAboutUs = () => {
+  const [darkMode, setDarkMode] = useState(getDarkModeFromStorage());
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showDeptModal, setShowDeptModal] = useState(false);
-  const [deptEditMode, setDeptEditMode] = useState(false);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const toggleProfileMenu = () => {
-    setShowProfileMenu(!showProfileMenu);
-  };
-
-  const toggleDarkMode = () => {
-    const newMode = !darkMode;
-    setDarkMode(newMode);
-    try {
-      localStorage.setItem('darkMode', JSON.stringify(newMode));
-    } catch (e) {
-      console.error("Error saving darkMode to localStorage:", e);
-    }
-  };
-
   useEffect(() => {
+    setDarkModeInStorage(darkMode);
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -90,51 +59,27 @@ const AboutUs = () => {
     }
   ];
 
-  const handleEditDepartment = () => {
-    if (user && (user.role === 'Faculty' || user.role === 'Student')) {
-      setShowDeptModal(true);
-      setDeptEditMode(true);
-    }
-  };
-
   return (
-    <div className={`relative w-full min-h-screen ${darkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-white text-gray-800'}`}>
-      {/* Department Selection Modal */}
-      <DepartmentSelectionModal
-        isOpen={showDeptModal}
-        onClose={() => setShowDeptModal(false)}
-        onSubmit={() => setShowDeptModal(false)}
-        userType={user?.role === 'Faculty' ? 'faculty' : 'student'}
-        currentDepartments={user?.departments || []}
-        canEdit={true}
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-800'}`}>
+      <Navbar 
+        darkMode={darkMode}
+        toggleSidebar={toggleSidebar} 
+        sidebarOpen={sidebarOpen}
       />
-      {/* Fixed Navbar with no border */}
-      <div className={`fixed top-0 left-0 right-4 z-50 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-        <Navbar 
-          darkMode={darkMode} 
-          setDarkMode={setDarkMode}
-          toggleSidebar={toggleSidebar}
-          showProfileMenu={showProfileMenu}
-          toggleProfileMenu={toggleProfileMenu}
-          sidebarOpen={sidebarOpen}
-          user={user}
-          onEditDepartment={handleEditDepartment}
-        />
-      </div>
-
-      <div className="flex pt-16"> {/* Add pt-16 to account for fixed navbar height */}
-        {/* Sidebar with dark mode toggle */}
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar 
+          sidebarOpen={sidebarOpen} 
+          toggleSidebar={toggleSidebar} 
           darkMode={darkMode} 
-          sidebarOpen={sidebarOpen}
-          toggleSidebar={toggleSidebar}
-          toggleDarkMode={toggleDarkMode}
+          activeView={null}
+          setActiveView={() => {}}
         />
-
-        {/* Main content area with seamless transition */}
-        <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-16'}`}>
-          <div className="p-8">
-            <div className="max-w-6xl mx-auto">
+        
+        <main className={`flex-1 overflow-x-hidden overflow-y-auto transition-all duration-300 ease-in-out ${
+          sidebarOpen ? 'ml-64' : 'ml-16'
+        }`}>
+          <div className="p-6 pt-20">
+            <div className="px-6">
               {/* About Section */}
               <section className="mb-16">
                 <h1 className="text-4xl font-bold mb-6">About Us</h1>
@@ -198,14 +143,14 @@ const AboutUs = () => {
                         <h4 className={`text-xl font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>{member.name}</h4>
                         <p className={`font-medium mt-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{member.role}</p>
                         <p className={`mt-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{member.bio}</p>
-                        <div className="flex flex-col items-center space-y-2 mt-4 text-sm">
+                        <div className={`flex flex-col items-center space-y-2 mt-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                           <div className="flex items-center">
                             <FaEnvelope className={`mr-2 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`} />
-                            <a href={`mailto:${member.email}`} className={`hover:text-blue-400 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{member.email}</a>
+                            <a href={`mailto:${member.email}`} className={`hover:text-blue-600 ${darkMode ? 'hover:text-blue-300' : ''}`}>{member.email}</a>
                           </div>
                           <div className="flex items-center">
                             <FaPhone className={`mr-2 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`} />
-                            <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>{member.phone}</span>
+                            <span>{member.phone}</span>
                           </div>
                         </div>
                       </div>
@@ -222,7 +167,7 @@ const AboutUs = () => {
                 </div>
               </div>
 
-              {/* Project Details - Fixed with dark mode support */}
+              {/* Project Details */}
               <div className={`rounded-xl shadow-lg p-8 mb-12 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                 <h3 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-blue-400' : 'text-blue-900'}`}>Project Details</h3>
                 <div className="space-y-6">
@@ -251,10 +196,10 @@ const AboutUs = () => {
               </div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
 };
 
-export default AboutUs;
+export default HodAboutUs; 

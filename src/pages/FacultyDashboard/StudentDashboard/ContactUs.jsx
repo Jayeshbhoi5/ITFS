@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { FaEnvelope, FaPaperPlane } from 'react-icons/fa';
-import Navbar from './FacultyDashboard/Navbar';
-import Sidebar from './FacultyDashboard/Sidebar';
+import Navbar from './Navbar';
+import StudentSidebar from './StudentSidebar';
 import emailjs from 'emailjs-com';
-import { useUserSession } from '../UserSessionContext';
-import DepartmentSelectionModal from '../components/DepartmentSelectionModal';
+import { useUserSession } from '../../UserSessionContext';
+import DepartmentSelectionModal from '../../components/DepartmentSelectionModal';
 
-const ContactUs = ({ darkMode }) => {
+const StudentContactUs = ({ darkMode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [formData, setFormData] = useState({
@@ -14,14 +14,13 @@ const ContactUs = ({ darkMode }) => {
     email: '',
     subject: '',
     message: '',
-    type: 'feedback' // feedback, bug, improvement
+    type: 'feedback'
   });
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('success'); // 'success' or 'error'
+  const [toastType, setToastType] = useState('success');
   const { user } = useUserSession();
   const [showDeptModal, setShowDeptModal] = useState(false);
-  const [deptEditMode, setDeptEditMode] = useState(false);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -34,10 +33,10 @@ const ContactUs = ({ darkMode }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     emailjs.send(
-      'service_cukhdvh', // Service ID
-      'template_7ig6a7y', // Template ID
-      formData, // Form data object
-      'EWntbehXd46736HkT' // Public key
+      'service_cukhdvh',
+      'template_7ig6a7y',
+      formData,
+      'EWntbehXd46736HkT'
     ).then(
       (result) => {
         setToastMessage('Message sent successfully!');
@@ -71,42 +70,26 @@ const ContactUs = ({ darkMode }) => {
   };
 
   const handleEditDepartment = () => {
-    if (user && (user.role === 'Faculty' || user.role === 'Student')) {
+    if (user && user.role === 'Student') {
       setShowDeptModal(true);
-      setDeptEditMode(true);
     }
   };
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-800'}`}>
-      {/* Department Selection Modal */}
       <DepartmentSelectionModal
         isOpen={showDeptModal}
         onClose={() => setShowDeptModal(false)}
         onSubmit={() => setShowDeptModal(false)}
-        userType={user?.role === 'Faculty' ? 'faculty' : 'student'}
+        userType={'student'}
         currentDepartments={user?.departments || []}
         canEdit={true}
       />
-      {/* Toast Notification */}
       {showToast && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
-          toastType === 'success'
-            ? darkMode ? 'bg-green-800 text-white' : 'bg-green-600 text-white'
-            : darkMode ? 'bg-red-800 text-white' : 'bg-red-600 text-white'
-        } ${showToast ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'}`}>
-          <div className="flex items-center space-x-2">
-            {toastType === 'success' ? (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10A8 8 0 11.293 2.293a1 1 0 011.414 1.414A6 6 0 1016.293 3.707a1 1 0 111.414-1.414A8 8 0 0118 10zm-8 4a1 1 0 100-2 1 1 0 000 2zm0-8a1 1 0 00-1 1v4a1 1 0 002 0V7a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            )}
-            <span className="font-medium">{toastMessage}</span>
-          </div>
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
+          toastType === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          <span>{toastMessage}</span>
         </div>
       )}
       <Navbar 
@@ -119,7 +102,7 @@ const ContactUs = ({ darkMode }) => {
         onEditDepartment={handleEditDepartment}
       />
       <div className="flex">
-        <Sidebar 
+        <StudentSidebar 
           darkMode={darkMode} 
           sidebarOpen={sidebarOpen}
           toggleSidebar={toggleSidebar}
@@ -139,7 +122,7 @@ const ContactUs = ({ darkMode }) => {
                   </div>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Name</label>
                       <input
@@ -227,4 +210,4 @@ const ContactUs = ({ darkMode }) => {
   );
 };
 
-export default ContactUs; 
+export default StudentContactUs;

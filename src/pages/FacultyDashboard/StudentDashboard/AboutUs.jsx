@@ -1,23 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { FaEnvelope, FaPhone } from 'react-icons/fa';
-import Navbar from './FacultyDashboard/Navbar';
-import Sidebar from './FacultyDashboard/Sidebar';
+import Navbar from './Navbar'; // Correct: Use Student's Navbar
+import StudentSidebar from './StudentSidebar'; // Correct: Use Student's Sidebar
 import { Link } from 'react-router-dom';
-import { useUserSession } from '../UserSessionContext';
-import DepartmentSelectionModal from '../components/DepartmentSelectionModal';
+import { useUserSession } from '../../UserSessionContext';
+import DepartmentSelectionModal from '../../components/DepartmentSelectionModal';
 
-const AboutUs = () => {
-  // Initialize dark mode state safely
+const StudentAboutUs = () => {
   const [darkMode, setDarkMode] = useState(() => {
     try {
       if (typeof window !== 'undefined') {
         const savedMode = localStorage.getItem('darkMode');
-        if (savedMode === null) return false;
-        return JSON.parse(savedMode);
+        return savedMode ? JSON.parse(savedMode) : false;
       }
     } catch (e) {
       console.error("Error parsing darkMode from localStorage:", e);
-      localStorage.removeItem('darkMode'); // Clean up invalid value
     }
     return false;
   });
@@ -25,7 +22,6 @@ const AboutUs = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showDeptModal, setShowDeptModal] = useState(false);
-  const [deptEditMode, setDeptEditMode] = useState(false);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -63,7 +59,7 @@ const AboutUs = () => {
       image: '/aaryas.jpg',
       email: 'aaryashewale03@gmail.com',
       phone: '+91 7588095796'
-    },      
+    },
     {
       name: 'Aarya Thombare',
       bio: 'Contributed to the development of user interface and project documentation.',
@@ -91,24 +87,21 @@ const AboutUs = () => {
   ];
 
   const handleEditDepartment = () => {
-    if (user && (user.role === 'Faculty' || user.role === 'Student')) {
+    if (user && user.role === 'Student') {
       setShowDeptModal(true);
-      setDeptEditMode(true);
     }
   };
 
   return (
     <div className={`relative w-full min-h-screen ${darkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-white text-gray-800'}`}>
-      {/* Department Selection Modal */}
       <DepartmentSelectionModal
         isOpen={showDeptModal}
         onClose={() => setShowDeptModal(false)}
         onSubmit={() => setShowDeptModal(false)}
-        userType={user?.role === 'Faculty' ? 'faculty' : 'student'}
+        userType={'student'}
         currentDepartments={user?.departments || []}
         canEdit={true}
       />
-      {/* Fixed Navbar with no border */}
       <div className={`fixed top-0 left-0 right-4 z-50 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
         <Navbar 
           darkMode={darkMode} 
@@ -122,53 +115,48 @@ const AboutUs = () => {
         />
       </div>
 
-      <div className="flex pt-16"> {/* Add pt-16 to account for fixed navbar height */}
-        {/* Sidebar with dark mode toggle */}
-        <Sidebar 
+      <div className="flex pt-16">
+        <StudentSidebar 
           darkMode={darkMode} 
           sidebarOpen={sidebarOpen}
           toggleSidebar={toggleSidebar}
           toggleDarkMode={toggleDarkMode}
+          user={user}
         />
 
-        {/* Main content area with seamless transition */}
         <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-16'}`}>
           <div className="p-8">
             <div className="max-w-6xl mx-auto">
-              {/* About Section */}
-              <section className="mb-16">
-                <h1 className="text-4xl font-bold mb-6">About Us</h1>
-                <div className={`p-6 rounded-lg shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                  <p className="text-lg mb-4">
-                    Welcome to Innovative Teaching Feedback, a platform designed to enhance the teaching-learning experience through effective feedback mechanisms.
-                  </p>
-                  <p className="text-lg mb-4">
-                    Our mission is to bridge the gap between students and faculty by providing a seamless feedback system that helps improve teaching methodologies and student engagement.
-                  </p>
-                  <p className="text-lg">
-                    We believe in the power of constructive feedback and its role in creating a better educational environment for everyone involved.
-                  </p>
-                </div>
-              </section>
+              <div className="text-center mb-16">
+                <h2 className={`text-4xl font-bold mb-6 ${darkMode ? 'text-blue-400' : 'text-blue-900'}`}>About Our Project</h2>
+                <p className={`text-xl max-w-3xl mx-auto ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  The Innovative Teaching Feedback system is designed to bridge the gap between students and faculty, 
+                  creating a transparent and effective learning environment at KBTCOE.
+                </p>
+              </div>
+
+              {/* Mission and Vision */}
               <div className={`rounded-xl shadow-lg p-8 mb-12 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                <h3 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>Our Mission & Vision</h3>
+                <h3 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-blue-400' : 'text-blue-900'}`}>Our Mission & Vision</h3>
                 <div className="grid md:grid-cols-2 gap-8">
                   <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-100'}`}>
                     <h4 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>Mission</h4>
                     <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
-                      To create a responsive educational ecosystem where timely feedback leads to measurable improvements in teaching methodologies and learning outcomes for all students at KBTCOE.
+                      To create a responsive educational ecosystem where timely feedback leads to measurable 
+                      improvements in teaching methodologies and learning outcomes for all students at KBTCOE.
                     </p>
                   </div>
                   <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-100'}`}>
                     <h4 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>Vision</h4>
                     <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
-                      To establish KBTCOE as a pioneering institute where continuous feedback and improvement become the foundation of educational excellence and student success.
+                      To establish KBTCOE as a pioneering institute where continuous feedback and improvement 
+                      become the foundation of educational excellence and student success.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Team Section */}
+              {/* Project Team Section */}
               <div className={`rounded-xl shadow-lg p-8 mb-12 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                 <h3 className={`text-2xl font-bold mb-8 ${darkMode ? 'text-blue-400' : 'text-blue-900'}`}>Our Team</h3>
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -183,10 +171,7 @@ const AboutUs = () => {
                               className="w-full h-full object-cover"
                               onError={(e) => {
                                 e.target.style.display = 'none';
-                                e.target.parentNode.innerHTML = `
-                                  <div class="w-full h-full flex items-center justify-center text-4xl ${darkMode ? 'text-blue-400' : 'text-blue-800'} font-medium">
-                                    ${member.name.charAt(0)}
-                                  </div>`;
+                                e.target.parentNode.innerHTML = `<div class="w-full h-full flex items-center justify-center text-4xl ${darkMode ? 'text-blue-400' : 'text-blue-800'} font-medium">${member.name.charAt(0)}</div>`;
                               }}
                             />
                           ) : (
@@ -198,14 +183,14 @@ const AboutUs = () => {
                         <h4 className={`text-xl font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>{member.name}</h4>
                         <p className={`font-medium mt-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{member.role}</p>
                         <p className={`mt-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{member.bio}</p>
-                        <div className="flex flex-col items-center space-y-2 mt-4 text-sm">
+                        <div className={`flex flex-col items-center space-y-2 mt-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                           <div className="flex items-center">
                             <FaEnvelope className={`mr-2 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`} />
-                            <a href={`mailto:${member.email}`} className={`hover:text-blue-400 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{member.email}</a>
+                            <a href={`mailto:${member.email}`} className={`hover:text-blue-600 ${darkMode ? 'hover:text-blue-300' : ''}`}>{member.email}</a>
                           </div>
                           <div className="flex items-center">
                             <FaPhone className={`mr-2 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`} />
-                            <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>{member.phone}</span>
+                            <span>{member.phone}</span>
                           </div>
                         </div>
                       </div>
@@ -222,8 +207,8 @@ const AboutUs = () => {
                 </div>
               </div>
 
-              {/* Project Details - Fixed with dark mode support */}
-              <div className={`rounded-xl shadow-lg p-8 mb-12 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+              {/* Project Details */}
+              <div className={`rounded-xl shadow-lg p-8 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                 <h3 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-blue-400' : 'text-blue-900'}`}>Project Details</h3>
                 <div className="space-y-6">
                   <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-100'}`}>
@@ -247,6 +232,16 @@ const AboutUs = () => {
                       </div>
                     </div>
                   </div>
+                  <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-100'}`}>
+                    <h4 className={`text-xl font-semibold mb-3 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>Key Features</h4>
+                    <ul className={`list-disc list-inside space-y-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <li>Role-based access control (Student, Faculty, HOD)</li>
+                      <li>Secure authentication and feedback submission</li>
+                      <li>Faculty can upload and manage teaching activities</li>
+                      <li>Students can provide feedback on activities</li>
+                      <li>Dashboard with insightful metrics for all user roles</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -257,4 +252,4 @@ const AboutUs = () => {
   );
 };
 
-export default AboutUs;
+export default StudentAboutUs;

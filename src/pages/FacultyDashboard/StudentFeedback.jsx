@@ -2,15 +2,21 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import { getDarkModeFromStorage, setDarkModeInStorage } from './darkModeUtils';
-import { collection, getDocs, query, where, orderBy, limit, doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit, doc, getDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from "../../firebaseConfig";
 import { useUserSession } from '../../UserSessionContext';
-import { FaStarHalfAlt, FaStar, FaRegStar, FaTimes, FaEdit, FaTrash, FaCheckSquare, FaRegSquare } from 'react-icons/fa';
+import { FaStarHalfAlt, FaStar, FaRegStar, FaTimes, FaEdit, FaTrash, FaCheckSquare, FaRegSquare, FaListUl, FaClone } from 'react-icons/fa';
 import LogoutConfirmation from '../../components/LogoutConfirmation';
 import { useNavigate } from 'react-router-dom';
+import DepartmentSelectionModal from '../../components/DepartmentSelectionModal';
 
 const StudentFeedback = () => {
   const navigate = useNavigate();
+  const { user } = useUserSession();
+  
+  // IMPORTANT: Move hasEditDeletePermission before any useEffect that uses it
+  const hasEditDeletePermission = user && user.role === 'Faculty';
+  
   const [darkMode, setDarkMode] = useState(getDarkModeFromStorage());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -20,7 +26,6 @@ const StudentFeedback = () => {
   const [showCompleteFeedback, setShowCompleteFeedback] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [detailedFeedbackLoading, setDetailedFeedbackLoading] = useState(false);
-  const { user } = useUserSession();
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [selectedActivities, setSelectedActivities] = useState(new Set());
   const [showEditModal, setShowEditModal] = useState(false);
@@ -35,11 +40,18 @@ const StudentFeedback = () => {
     activityDate: ''
   });
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [showMultiDeleteConfirmation, setShowMultiDeleteConfirmation] = useState(false);
-  const [activityToDelete, setActivityToDelete] = useState(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
   const [deletingActivities, setDeletingActivities] = useState(false);
+  const [activityToDelete, setActivityToDelete] = useState(null);
+  const [isMultiDelete, setIsMultiDelete] = useState(false);
+  const [showDepartmentModal, setShowDepartmentModal] = useState(false);
+  const [activityForDeptChange, setActivityForDeptChange] = useState(null);
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [modalImageUrl, setModalImageUrl] = useState('');
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
@@ -54,7 +66,13 @@ const StudentFeedback = () => {
   const toggleProfileMenu = () => {
     setShowProfileMenu(!showProfileMenu);
   };
-
+  const showToastMessage = (message) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+    }, 3000);
+  };
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (showProfileMenu && !event.target.closest('.profile-menu-container')) {
@@ -115,7 +133,7 @@ const StudentFeedback = () => {
             const feedbackData = feedbackDoc.data();
             return {
               id: feedbackDoc.id,
-              studentName: feedbackData.studentName,
+              studentName: feedbackData.studentName || 'Anonymous Student', // Ensure fallback
               studentId: feedbackData.studentId,
               rating: feedbackData.rating,
               understandability: feedbackData.understandability,
@@ -123,7 +141,8 @@ const StudentFeedback = () => {
               relevance: feedbackData.relevance,
               comment: feedbackData.comment,
               suggestions: feedbackData.suggestions,
-              timestamp: feedbackData.timestamp
+              timestamp: feedbackData.timestamp,
+              createdAt: feedbackData.createdAt // <-- Ensure this is included
             };
           });
           
@@ -143,7 +162,8 @@ const StudentFeedback = () => {
             feedbackCount: feedbackComments.length,
             branch: data.className || 'Unknown',
             year: data.academicYear || 'Unknown',
-            image: data.mainImage || (data.fileUrls && data.fileUrls.length > 0 ? data.fileUrls[0].url : 'https://via.placeholder.com/300x200?text=No+Image')
+            image: data.mainImage || (data.fileUrls && data.fileUrls.length > 0 ? data.fileUrls[0].url : 'https://via.placeholder.com/300x200?text=No+Image'),
+            department: data.department || 'Unknown'
           };
         });
         
@@ -177,8 +197,11 @@ const StudentFeedback = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isMultiSelectMode && !event.target.closest('.activities-container')) {
-        setIsMultiSelectMode(false);
+  if (isMultiSelectMode && 
+          !event.target.closest('.activities-container') && 
+          !event.target.closest('button[title*="Delete"]') &&
+          !event.target.closest('.bg-red-600')) {
+                    setIsMultiSelectMode(false);
         setSelectedActivities(new Set());
       }
     };
@@ -188,6 +211,19 @@ const StudentFeedback = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isMultiSelectMode]);
+
+  // Debug useEffect - now hasEditDeletePermission is available
+  useEffect(() => {
+    console.log('State update - isMultiSelectMode:', isMultiSelectMode);
+    console.log('State update - selectedActivities size:', selectedActivities.size);
+    console.log('State update - hasEditDeletePermission:', hasEditDeletePermission);
+  }, [isMultiSelectMode, selectedActivities, hasEditDeletePermission]);
+
+  useEffect(() => {
+    console.log('Current user:', user);
+    console.log('User role:', user?.role);
+    console.log('Has edit/delete permission:', hasEditDeletePermission);
+  }, [user, hasEditDeletePermission]);
 
   const renderStars = (rating) => {
     const fullStars = Math.floor(rating);
@@ -239,127 +275,201 @@ const StudentFeedback = () => {
   };
   
   const toggleMultiSelectMode = () => {
-    setIsMultiSelectMode(!isMultiSelectMode);
+    setIsMultiSelectMode((prev) => {
+      const newMode = !prev;
+      console.log('Multi-select mode toggled to:', newMode);
+      return newMode;
+    });
     setSelectedActivities(new Set());
+    console.log('Multi-select mode state updated');
   };
 
-  // This is the critical function for toggling activity selection
-  const toggleActivitySelection = (activityId, e) => {
-    // Prevent the click from selecting the activity
-    if (e) {
-      e.stopPropagation();
-    }
-    
-    const newSelectedActivities = new Set([...selectedActivities]);
-    if (newSelectedActivities.has(activityId)) {
-      newSelectedActivities.delete(activityId);
-    } else {
-      newSelectedActivities.add(activityId);
-    }
-    
-    setSelectedActivities(newSelectedActivities);
-    console.log("Selected activities:", Array.from(newSelectedActivities)); // Debugging
+  const toggleActivitySelection = (activityId) => {
+    console.log('Toggling selection for activity:', activityId);
+    setSelectedActivities((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(activityId)) {
+        newSet.delete(activityId);
+        console.log('Deselected activity:', activityId);
+      } else {
+        newSet.add(activityId);
+        console.log('Selected activity:', activityId);
+      }
+      console.log('Total selected activities:', Array.from(newSet));
+      console.log('Selected activities size:', newSet.size);
+      return newSet;
+    });
   };
-  
+
+  // Single activity delete function
   const deleteActivity = (activityId) => {
     setActivityToDelete(activityId);
+    setIsMultiDelete(false);
     setShowDeleteConfirmation(true);
   };
 
-  const deleteSelectedActivities = () => {
-    if (selectedActivities.size > 0) {
-      setShowMultiDeleteConfirmation(true);
-    }
-  };
+  // Multi-select delete function
+const handleDeleteConfirm = async () => {
+  console.log('handleDeleteConfirm called');
+  console.log('isMultiDelete:', isMultiDelete);
+  console.log('selectedActivities:', Array.from(selectedActivities));
+  console.log('activityToDelete:', activityToDelete);
 
-  const handleDeleteConfirm = async () => {
-    try {
-      if (activityToDelete) {
-        await deleteDoc(doc(db, 'activities', activityToDelete));
-        setActivities(prevActivities => 
-          prevActivities.filter(activity => activity.id !== activityToDelete)
-        );
-        if (selectedActivity?.id === activityToDelete) {
-          setSelectedActivity(null);
-        }
-      }
-    } catch (error) {
-      console.error('Error deleting activity:', error);
-      alert('Failed to delete activity. Please try again.');
-    } finally {
-      setShowDeleteConfirmation(false);
-      setActivityToDelete(null);
-    }
-  };
+  try {
+    setDeletingActivities(true);
+    setDeleteError(null);
 
-  // This is the critical function for multi-delete
-  const handleMultiDeleteConfirm = async () => {
-    try {
-      setDeletingActivities(true);
-      setDeleteError(null);
-      
+    if (isMultiDelete) {
+      // Delete multiple activities
       const activitiesToDelete = Array.from(selectedActivities);
-      console.log("Attempting to delete activities:", activitiesToDelete);
+      console.log('Starting multi-delete for activities:', activitiesToDelete);
       
       if (activitiesToDelete.length === 0) {
-        setDeleteError("No activities selected for deletion");
-        return;
+        throw new Error('No activities selected for deletion');
       }
       
-      // Process each deletion one by one
-      for (const activityId of activitiesToDelete) {
+      // Process each activity deletion
+      for (let i = 0; i < activitiesToDelete.length; i++) {
+        const activityId = activitiesToDelete[i];
+        console.log(`Processing deletion ${i + 1}/${activitiesToDelete.length} for activity:`, activityId);
+        
         try {
-          console.log(`Deleting activity: ${activityId}`);
-          
-          // First, delete related feedback
+          // Delete related feedback first
+          console.log('Querying feedback for activity:', activityId);
           const feedbackQuery = query(
             collection(db, 'feedback'),
             where('activityId', '==', activityId)
           );
           
           const feedbackSnapshot = await getDocs(feedbackQuery);
-          console.log(`Found ${feedbackSnapshot.size} feedback items for activity ${activityId}`);
+          console.log(`Found ${feedbackSnapshot.docs.length} feedback documents for activity ${activityId}`);
           
-          // Delete each feedback document
-          for (const doc of feedbackSnapshot.docs) {
-            await deleteDoc(doc.ref);
+          // Delete feedback documents one by one
+          for (const feedbackDoc of feedbackSnapshot.docs) {
+            console.log('Deleting feedback document:', feedbackDoc.id);
+            await deleteDoc(feedbackDoc.ref);
           }
           
-          // Now delete the activity
-          await deleteDoc(doc(db, 'activities', activityId));
-          console.log(`Successfully deleted activity ${activityId}`);
+          // Delete the activity document
+          console.log('Deleting activity document:', activityId);
+          const activityRef = doc(db, 'activities', activityId);
+          await deleteDoc(activityRef);
+          console.log('Successfully deleted activity:', activityId);
           
-        } catch (error) {
-          console.error(`Error deleting activity ${activityId}:`, error);
-          throw new Error(`Failed to delete activity ${activityId}: ${error.message}`);
+        } catch (err) {
+          console.error(`Failed to delete activity ${activityId}:`, err);
+          throw new Error(`Failed to delete activity: ${err.message}`);
         }
       }
       
-      // Update UI after successful deletions
-      setActivities(prevActivities => 
-        prevActivities.filter(activity => !selectedActivities.has(activity.id))
-      );
+      console.log('All activities deleted successfully, updating local state');
       
-      // Update selected activity if it was deleted
+      // Update local state - remove deleted activities
+      setActivities((prevActivities) => {
+        const filteredActivities = prevActivities.filter((activity) => !selectedActivities.has(activity.id));
+        console.log('Activities after deletion:', filteredActivities.length);
+        return filteredActivities;
+      });
+      
+      // Clear selection if selected activity was deleted
       if (selectedActivity && selectedActivities.has(selectedActivity.id)) {
-        const remainingActivities = activities.filter(a => !selectedActivities.has(a.id));
-        setSelectedActivity(remainingActivities.length > 0 ? remainingActivities[0] : null);
+        console.log('Selected activity was deleted, clearing selection');
+setSelectedActivity((prevSelected) => {
+  const remainingActivities = activities.filter((activity) => !selectedActivities.has(activity.id));
+  return remainingActivities.length > 0 ? remainingActivities[0] : null;
+});
       }
       
-      alert(`Successfully deleted ${activitiesToDelete.length} activities`);
-      
-    } catch (error) {
-      console.error('Error in batch delete operation:', error);
-      setDeleteError(`Failed to delete activities: ${error.message}`);
-    } finally {
-      setShowMultiDeleteConfirmation(false);
+      // Reset multi-select state
       setSelectedActivities(new Set());
       setIsMultiSelectMode(false);
-      setDeletingActivities(false);
-    }
-  };
+      
+      console.log('Multi-delete operation completed successfully');
+      
+    } else {
+      // Delete single activity
+      console.log('Starting single delete for activity:', activityToDelete);
+      
+      if (!activityToDelete) {
+        throw new Error('No activity selected for deletion');
+      }
+      
+      // Delete related feedback first
+      console.log('Querying feedback for single activity:', activityToDelete);
+      const feedbackQuery = query(
+        collection(db, 'feedback'),
+        where('activityId', '==', activityToDelete)
+      );
+      
+      const feedbackSnapshot = await getDocs(feedbackQuery);
+      console.log(`Found ${feedbackSnapshot.docs.length} feedback documents`);
+      
+      // Delete feedback documents
+      for (const feedbackDoc of feedbackSnapshot.docs) {
+        console.log('Deleting feedback document:', feedbackDoc.id);
+        await deleteDoc(feedbackDoc.ref);
+      }
+      
+      // Delete the activity document
+      console.log('Deleting single activity document:', activityToDelete);
+      const activityRef = doc(db, 'activities', activityToDelete);
+      await deleteDoc(activityRef);
+      
+      // Update local state
+      setActivities((prevActivities) => {
+        const filteredActivities = prevActivities.filter((activity) => activity.id !== activityToDelete);
+        console.log('Activities after single deletion:', filteredActivities.length);
+        return filteredActivities;
+      });
+      
+      // Clear selection if selected activity was deleted
+      if (selectedActivity && selectedActivity.id === activityToDelete) {
+        console.log('Selected activity was deleted, clearing selection');
 
-  const hasEditDeletePermission = user && user.role === 'Faculty';
+          setSelectedActivity((prevSelected) => {
+            const remainingActivities = activities.filter((activity) => activity.id !== activityToDelete);
+            return remainingActivities.length > 0 ? remainingActivities[0] : null;
+          });
+      }
+      
+      console.log('Single delete operation completed successfully');
+    }
+        const deletedCount = isMultiDelete ? selectedActivities.size : 1;
+       showToastMessage(`Successfully deleted ${deletedCount} activity `);
+
+    // Close modal and reset states
+    setShowDeleteConfirmation(false);
+    setActivityToDelete(null);
+    setIsMultiDelete(false);
+    setDeleteError(null);
+    
+
+  } catch (error) {
+    console.error('Error in handleDeleteConfirm:', error);
+    setDeleteError(`Failed to delete activities: ${error.message}`);
+  } finally {
+    setDeletingActivities(false);
+    console.log('Delete operation finished');
+  }
+};
+ const handleMultiDelete = () => {
+  console.log('handleMultiDelete called');
+  console.log('Selected activities size:', selectedActivities.size);
+  console.log('Selected activities array:', Array.from(selectedActivities));
+  console.log('hasEditDeletePermission:', hasEditDeletePermission);
+  
+  if (selectedActivities.size === 0) {
+    console.log('No activities selected for deletion');
+    alert('Please select activities to delete');
+    return;
+  }
+  
+  console.log('Setting multi-delete confirmation modal');
+  setIsMultiDelete(true);
+  setActivityToDelete(null);
+  setDeleteError(null);
+  setShowDeleteConfirmation(true);
+};
 
   const openEditModal = async (activity) => {
     setEditingActivity(activity);
@@ -406,16 +516,16 @@ const StudentFeedback = () => {
 
       setShowEditModal(false);
       setEditingActivity(null);
-      alert('Activity updated successfully!');
+             showToastMessage(`Activity updated successfully!`);
+
     } catch (error) {
       console.error('Error updating activity:', error);
-      alert('Failed to update activity. Please try again.');
+                   showToastMessage(`Failed to update activity. Please try again`);
+
     }
   };
-  
 
   const handleLogout = () => {
-    // Add your logout logic here
     navigate('/login');
   };
 
@@ -432,6 +542,53 @@ const StudentFeedback = () => {
     setShowLogoutConfirm(false);
   };
 
+  const handleOpenDepartmentModal = (activity) => {
+    setActivityForDeptChange(activity);
+    setShowDepartmentModal(true);
+  };
+
+  const handleDepartmentSubmit = async ({ departments }) => {
+    if (!activityForDeptChange || departments.length === 0) {
+      setShowDepartmentModal(false);
+      return;
+    }
+
+    const activityRef = doc(db, 'activities', activityForDeptChange.id);
+    try {
+      await updateDoc(activityRef, {
+        department: departments[0] // Assuming single department for an activity
+      });
+      showToastMessage('Department updated successfully!');
+      
+      // Refresh the activities list
+      setActivities(prev => prev.map(act => 
+        act.id === activityForDeptChange.id ? { ...act, department: departments[0] } : act
+      ));
+      if (selectedActivity?.id === activityForDeptChange.id) {
+        setSelectedActivity(prev => ({ ...prev, department: departments[0] }));
+      }
+
+    } catch (error) {
+      console.error("Error updating department: ", error);
+      showToastMessage('Failed to update department.', 'error');
+    } finally {
+      setShowDepartmentModal(false);
+      setActivityForDeptChange(null);
+    }
+  };
+
+  const openImageModal = (imageUrl) => {
+    console.log("openImageModal called with URL:", imageUrl);
+    setModalImageUrl(imageUrl);
+    setIsImageModalOpen(true);
+  };
+
+  const closeImageModal = () => {
+    console.log("closeImageModal called");
+    setIsImageModalOpen(false);
+    setModalImageUrl('');
+  };
+
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-800'} transition-colors duration-300`} style={{ minHeight: '109vh' }}>
       <Navbar 
@@ -444,25 +601,50 @@ const StudentFeedback = () => {
         user={user}
       />
 
+      {/* Department Display */}
+      {user?.role === 'Student' && user?.departments && user.departments.length > 0 && (
+        <div className="px-6 pt-4 pb-2">
+          <div className="inline-block bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full px-4 py-2 text-sm font-semibold shadow">
+            Your Department: {user.departments[0]}
+          </div>
+        </div>
+      )}
+
       <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}>
         <div className="flex flex-col md:flex-row gap-6">
           <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-4 h-min sticky top-24`}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Your Activities</h2>
-              {hasEditDeletePermission && (
-                <div className="flex items-center gap-2">
-                 
-                  {isMultiSelectMode && selectedActivities.size > 0 && (
-                    <button
-                      onClick={deleteSelectedActivities}
-                      className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1"
-                    >
-                      <FaTrash size={16} />
-                      <span className="text-sm">({selectedActivities.size})</span>
-                    </button>
-                  )}
-                </div>
-              )}
+            <div className="flex items-center mb-4 w-full">
+              <h2 className="text-xl font-bold flex-shrink-0">Your Activities</h2>
+              <div className="flex items-center gap-2 ml-auto">
+  <button
+    onClick={toggleMultiSelectMode}
+    className={`p-2 rounded-lg border text-sm font-medium transition-colors flex items-center justify-center h-8 w-8 ${
+      isMultiSelectMode
+        ? darkMode
+          ? 'bg-blue-700 border-blue-500 text-white'
+          : 'bg-blue-200 border-blue-500 text-blue-800'
+        : darkMode
+          ? 'bg-gray-700 border-gray-600 text-white'
+          : 'bg-gray-100 border-gray-300 text-blue-800'
+    }`}
+    title="Multi-Select"
+  >
+    <FaClone className="h-4 w-4 mx-auto" />
+  </button>
+  {isMultiSelectMode && selectedActivities.size > 0 && hasEditDeletePermission && (
+    <button
+      onClick={() => {
+        console.log('Multi-delete button clicked');
+        console.log('Selected activities before delete:', Array.from(selectedActivities));
+        handleMultiDelete();
+      }}
+      className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center h-8 w-8"
+      title={`Delete ${selectedActivities.size} Selected`}
+    >
+      <FaTrash size={16} />
+    </button>
+  )}
+</div>
             </div>
             
             {loading ? (
@@ -483,55 +665,50 @@ const StudentFeedback = () => {
                         : (darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50')
                     }`}
                   >
-                    {hasEditDeletePermission && isMultiSelectMode && (
-                      <div 
-                        className="absolute top-2 right-2"
-                        onClick={(e) => e.stopPropagation()}
+                    <div className="flex items-center justify-between">
+                      <div
+                        onClick={() => {
+                          if (!isMultiSelectMode) {
+                            setSelectedActivity(activity);
+                            setIsDescriptionExpanded(false);
+                          }
+                        }}
+                        className="flex-1"
                       >
-                        <div 
-                          className="relative cursor-pointer" 
-                          onClick={(e) => toggleActivitySelection(activity.id, e)}
+                        <h3 className="font-medium">
+                          <span>{activity.activityName}</span>
+                          {(Array.isArray(activity.departments) && activity.departments.length > 0) ? (
+                            <span className="block text-xs text-gray-500 mt-1">{activity.departments.join(', ')}</span>
+                          ) : (
+                            activity.department && (
+                              <span className="block text-xs text-gray-500 mt-1">{activity.department}</span>
+                            )
+                          )}
+                        </h3>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{activity.date}</span>
+                          <div className="flex items-center gap-1">
+                            <span className={`text-sm font-semibold ${activity.averageRating >= 4 ? 'text-green-500' : activity.averageRating >= 3 ? 'text-yellow-500' : 'text-red-500'}`}>{activity.averageRating.toFixed(1)}</span>
+                            <FaStar className={`h-4 w-4 ${activity.averageRating >= 4 ? 'text-green-500' : activity.averageRating >= 3 ? 'text-yellow-500' : 'text-red-500'}`} />
+                            <span className="text-xs text-gray-500">({activity.feedbackCount})</span>
+                          </div>
+                        </div>
+                      </div>
+                      {isMultiSelectMode && (
+                        <span
+                          className="ml-2 cursor-pointer"
+                          onClick={e => {
+                            e.stopPropagation();
+                            toggleActivitySelection(activity.id);
+                          }}
                         >
                           {selectedActivities.has(activity.id) ? (
                             <FaCheckSquare className="h-5 w-5 text-blue-500" />
                           ) : (
                             <FaRegSquare className="h-5 w-5 text-gray-400" />
                           )}
-                        </div>
-                      </div>
-                    )}
-                    <div onClick={() => {
-                      if (!isMultiSelectMode) {
-                        setSelectedActivity(activity);
-                      } else {
-                        toggleActivitySelection(activity.id);
-                      }
-                    }}>
-                      <h3 className="font-medium">{activity.activityName}</h3>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          {activity.date}
                         </span>
-                        <div className="flex items-center gap-1">
-                          <span className={`text-sm font-semibold ${
-                            activity.averageRating >= 4 
-                              ? 'text-green-500'
-                              : activity.averageRating >= 3
-                                ? 'text-yellow-500'
-                                : 'text-red-500'
-                          }`}>
-                            {activity.averageRating.toFixed(1)}
-                          </span>
-                          <FaStar className={`h-4 w-4 ${
-                            activity.averageRating >= 4 
-                              ? 'text-green-500'
-                              : activity.averageRating >= 3
-                                ? 'text-yellow-500'
-                                : 'text-red-500'
-                          }`} />
-                          <span className="text-xs text-gray-500">({activity.feedbackCount})</span>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -570,10 +747,15 @@ const StudentFeedback = () => {
                 )}
 
                 <div className="h-64 relative">
-                  <img 
-                    src={selectedActivity.image} 
-                    alt={selectedActivity.activityName} 
-                    className="w-full h-full object-cover"
+                  <img
+                    src={selectedActivity.image}
+                    alt={selectedActivity.activityName}
+                    className="w-full h-full object-cover rounded-t-lg cursor-pointer"
+                    onClick={() => openImageModal(selectedActivity.image)}
+                    onError={(e) => {
+                      e.target.onerror = null; 
+                      e.target.src='https://placehold.co/600x400/lightgray/white?text=Activity';
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end">
                     <div className="p-6 text-white">
@@ -625,16 +807,32 @@ const StudentFeedback = () => {
                       <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Date</h3>
                       <p className="text-lg">{selectedActivity.date}</p>
                     </div>
-                    
+                    <div>
+                      <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Departments</h3>
+                      <p className="text-lg">{Array.isArray(selectedActivity.departments) ? selectedActivity.departments.join(', ') : selectedActivity.department || '-'}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Description</h3>
+                      <div className="mt-1">
+                        <p className="whitespace-pre-wrap">
+                          {isDescriptionExpanded || (selectedActivity.description || '').length <= 250
+                            ? selectedActivity.description
+                            : `${(selectedActivity.description || '').substring(0, 250)}...`}
+                        </p>
+                        {(selectedActivity.description || '').length > 250 && (
+                          <button
+                            onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                            className="text-blue-500 hover:underline mt-1 text-sm bg-transparent border-none p-0"
+                          >
+                            {isDescriptionExpanded ? 'Show less' : 'more...'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="mb-6">
-                    <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Description</h3>
-                    <p className="mt-1">{selectedActivity.description}</p>
-                  </div>
-                  
-                  <div className={`p-4 rounded-lg mb-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                    <h3 className="font-bold text-lg mb-2">Student Feedback Summary</h3>
+                    <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Student Feedback Summary</h3>
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-end gap-2">
@@ -680,12 +878,26 @@ const StudentFeedback = () => {
                             <div className="flex justify-between items-start">
                               <div>
                                 <h4 className="font-medium">{comment.studentName || 'Anonymous Student'}</h4>
-                                <div className="flex mt-1">
-                                  {renderStars(comment.rating)}
-                                </div>
+                                <div className="flex mt-1">{renderStars(comment.rating)}</div>
                               </div>
                               <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {comment.timestamp?.toDate?.().toLocaleDateString() || ''}
+                                {comment.createdAt
+                                  ? (() => {
+                                      if (comment.createdAt.toDate) {
+                                        return comment.createdAt.toDate().toLocaleString('en-GB', {
+                                          day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                                        });
+                                      }
+                                      const d = new Date(comment.createdAt);
+                                      if (!isNaN(d)) {
+                                        return d.toLocaleString('en-GB', {
+                                          day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                                        });
+                                      }
+                                      return comment.createdAt;
+                                    })()
+                                  : '-'
+                                }
                               </span>
                             </div>
                             <p className="mt-2">{comment.comment || 'No comment provided'}</p>
@@ -746,7 +958,31 @@ const StudentFeedback = () => {
               <div className="flex justify-between">
                 <h3 className="font-medium text-lg">{selectedFeedback.studentName || 'Anonymous Student'}</h3>
                 <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {selectedFeedback.timestamp?.toDate?.().toLocaleDateString() || ''}
+                  {(() => {
+                    // Prefer timestamp
+                    if (selectedFeedback.timestamp?.toDate) {
+                      return selectedFeedback.timestamp.toDate().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    }
+                    // Firestore Timestamp object for createdAt
+                    if (selectedFeedback.createdAt?.toDate) {
+                      return selectedFeedback.createdAt.toDate().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    }
+                    // ISO string or date string
+                    if (typeof selectedFeedback.createdAt === 'string') {
+                      const d = new Date(selectedFeedback.createdAt);
+                      if (!isNaN(d)) {
+                        return d.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                      }
+                    }
+                    // Milliseconds number
+                    if (typeof selectedFeedback.createdAt === 'number') {
+                      const d = new Date(selectedFeedback.createdAt);
+                      if (!isNaN(d)) {
+                        return d.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                      }
+                    }
+                    return '-';
+                  })()}
                 </span>
               </div>
             </div>
@@ -821,7 +1057,18 @@ const StudentFeedback = () => {
           </div>
         </div>
       )}
-      
+      {/* Toast Notification */}
+      {showToast && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
+          darkMode ? 'bg-green-800 text-white' : 'bg-green-600 text-white'
+        } ${showToast ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'}`}>
+          <div className="flex items-center space-x-2">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            <span className="font-medium">{toastMessage}</span>
+          </div>
+        </div>)}
       {showEditModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} rounded-lg shadow-xl w-full max-w-2xl mx-4 flex flex-col`} style={{ maxHeight: '90vh' }}>
@@ -976,85 +1223,98 @@ const StudentFeedback = () => {
         </div>
       )}
       
-      {showDeleteConfirmation && (
+      
+     {showDeleteConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 max-w-sm w-fullounded-lg p-6 max-w-sm w-full mx-4 shadow-xl`}>
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl`}>
             <h3 className="text-xl font-bold mb-4">Confirm Delete</h3>
             <p className={`mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              Are you sure you want to delete this activity? This action cannot be undone.
+              {isMultiDelete 
+                ? `Are you sure you want to delete ${selectedActivities.size} selected activities? This action cannot be undone.`
+                : `Are you sure you want to delete this activity? This action cannot be undone.`
+              }
             </p>
+            {deleteError && (
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+                <p>{deleteError}</p>
+              </div>
+            )}
             <div className="flex justify-end gap-4">
               <button
-                onClick={() => setShowDeleteConfirmation(false)}
+                onClick={() => {
+                  setShowDeleteConfirmation(false);
+                  setActivityToDelete(null);
+                  setIsMultiDelete(false);
+                  setDeleteError(null);
+                }}
                 className={`px-4 py-2 rounded-lg ${
                   darkMode
                     ? 'bg-gray-700 hover:bg-gray-600 text-white'
                     : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                 }`}
+                disabled={deletingActivities}
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className={`px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 ${
+                  deletingActivities ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                disabled={deletingActivities}
               >
-                Delete
+                {deletingActivities ? 'Deleting...' : isMultiDelete ? `Delete ${selectedActivities.size} Activities` : 'Delete'}
               </button>
             </div>
           </div>
+          
         </div>
+        
       )}
 
-      {showMultiDeleteConfirmation && (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-    <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl`}>
-      <h3 className="text-xl font-bold mb-4">Confirm Multiple Delete</h3>
-      <p className={`mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-        Are you sure you want to delete {selectedActivities.size} selected activities? This action cannot be undone.
-      </p>
-      {deleteError && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
-          <p>{deleteError}</p>
+      <Sidebar 
+        darkMode={darkMode} 
+        sidebarOpen={sidebarOpen} 
+        toggleSidebar={toggleSidebar}
+        toggleDarkMode={toggleDarkMode}
+        activePage="comments" 
+      />
+
+      <LogoutConfirmation
+        isOpen={showLogoutConfirm}
+        onClose={handleCancelLogout}
+        onConfirm={handleConfirmLogout}
+        darkMode={darkMode}
+      />
+      <DepartmentSelectionModal
+        isOpen={showDepartmentModal}
+        onClose={() => setShowDepartmentModal(false)}
+        onSubmit={handleDepartmentSubmit}
+        userType="faculty" // Treat this as a faculty action for selecting a department
+        currentDepartments={activityForDeptChange ? [activityForDeptChange.department] : []}
+        canEdit={true}
+      />
+      {isImageModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center p-4"
+          onClick={closeImageModal}
+        >
+          <div
+            className={`relative shadow-lg w-full max-w-4xl max-h-[90vh] ${darkMode ? 'bg-gray-900' : 'bg-white'}`}
+            onClick={e => e.stopPropagation()}
+          >
+            <img src={modalImageUrl} alt="Full size activity" className="w-full h-auto object-contain max-h-[90vh]" />
+            <button
+              onClick={closeImageModal}
+              className={`absolute top-2 right-2 p-2 rounded-md ${darkMode ? 'text-gray-300 bg-gray-800 hover:bg-gray-700' : 'text-gray-500 bg-white hover:bg-gray-100'}`}
+              aria-label="Close image viewer"
+            >
+              <FaTimes className="h-6 w-6" />
+            </button>
+          </div>
         </div>
       )}
-      <div className="flex justify-end gap-4">
-        <button
-          onClick={() => setShowMultiDeleteConfirmation(false)}
-          className={`px-4 py-2 rounded-lg ${
-            darkMode
-              ? 'bg-gray-700 hover:bg-gray-600 text-white'
-              : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-          }`}
-          disabled={loading}
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleMultiDeleteConfirm}
-          className={`px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-          disabled={loading}
-        >
-          {loading ? 'Deleting...' : 'Delete All'}
-        </button>
-      </div>
     </div>
-  </div>
-)}
-<Sidebar 
-  darkMode={darkMode} 
-  sidebarOpen={sidebarOpen} 
-  toggleSidebar={toggleSidebar}
-  toggleDarkMode={toggleDarkMode}
-  activePage="comments" 
-/>
-
-<LogoutConfirmation
-  isOpen={showLogoutConfirm}
-  onClose={handleCancelLogout}
-  onConfirm={handleConfirmLogout}
-  darkMode={darkMode}
-/>
-  </div>
   );
 };
 

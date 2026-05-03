@@ -40,6 +40,9 @@ export const signInWithGoogle = async () => {
                 email: user.email,
                 role: role,
                 createdAt: new Date(),
+                departmentChangeCount: 0,  // Initialize counter for new users
+                departments: [],  // Initialize empty departments array
+                primaryDepartment: ''  // Initialize empty primary department for faculty
             });
 
             alert(`Welcome ${user.displayName}! You are logged in as ${role}.`);

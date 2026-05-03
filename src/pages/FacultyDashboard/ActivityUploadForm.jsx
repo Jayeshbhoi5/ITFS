@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaUpload, FaImage, FaVideo, FaSpinner, FaTimes, FaCheckCircle } from 'react-icons/fa';
 import { useActivities } from './ActivityContext';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -12,11 +12,12 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
   
   // Form state
   const [formData, setFormData] = useState({
-    academicYear: '2024-25',
+    academicYear: '2025-26',
     semester: 'I',
     courseName: '',
     className: 'TE',
     facultyName: user?.name || '',
+    department: user?.departments && user.departments.length > 0 ? user.departments[0] : '',
     activityName: '',
     description: '',
     files: [],
@@ -30,6 +31,8 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [uploadedActivityName, setUploadedActivityName] = useState('');
+  const [deptDropdownOpen, setDeptDropdownOpen] = useState(false);
+  const deptDropdownRef = useRef(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -70,7 +73,7 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
     if (!formData.courseName.trim()) errors.courseName = 'Required';
     if (!formData.activityName.trim()) errors.activityName = 'Required';
     if (!formData.description.trim()) errors.description = 'Required';
-    
+    if (!formData.department) errors.department = 'Please select a department';
     setFormErrors(errors);
     return !Object.keys(errors).length;
   };
@@ -128,7 +131,8 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
         mainImage: fileUrls.length > 0 ? fileUrls[0].url : null,
         status: 'Active',
         facultyId: user?.uid,
-        department: user?.department || 'General',
+        department: formData.department,
+        departments: formData.departments,
         targetBranches: [],
         targetYears: [],
         targetSemesters: []
@@ -145,11 +149,12 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
       
       // Reset form
       setFormData({
-        academicYear: '2024-25',
+        academicYear: '2025-26',
         semester: 'I',
         courseName: '',
         className: 'TE',
         facultyName: user?.name || '',
+        department: user?.departments && user.departments.length > 0 ? user.departments[0] : '',
         activityName: '',
         description: '',
         files: [],
@@ -198,6 +203,24 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    const primaryDept = user?.primaryDepartment || (user?.departments && user.departments[0]);
+    if (primaryDept && (!formData.departments || formData.departments.length === 0)) {
+      setFormData(prev => ({ ...prev, departments: [primaryDept] }));
+    }
+    // eslint-disable-next-line
+  }, [user]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (deptDropdownRef.current && !deptDropdownRef.current.contains(event.target)) {
+        setDeptDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
     <div className={`p-6 rounded-lg shadow-md ${darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'}`}>
       <h2 className="text-2xl font-bold mb-6 flex items-center">
@@ -220,7 +243,7 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
               onChange={handleInputChange}
               className={`w-full p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}
             >
-              {['2019-20', '2020-21', '2021-22', '2022-23', '2023-24', '2024-25', '2025-26'].map(year => (
+              {['2020-21', '2021-22', '2022-23', '2023-24', '2024-25', '2025-26','2026-27','2027-28'].map(year => (
                 <option key={year} value={year}>{year}</option>
               ))}
             </select>
@@ -276,6 +299,49 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
               className={`w-full p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}
               disabled
             />
+          </div>
+
+          <div className="mb-4">
+            <label className="block mb-2 font-medium">Departments</label>
+            <div className="relative" ref={deptDropdownRef}>
+              <button
+                type="button"
+                className={`w-full p-3 rounded-lg border ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50 text-black'} text-left focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                onClick={() => setDeptDropdownOpen((open) => !open)}
+              >
+                {formData.departments && formData.departments.length > 0
+                  ? formData.departments.join(', ')
+                  : 'Select department(s)'}
+                <span className="float-right">▼</span>
+              </button>
+              {deptDropdownOpen && (
+                <div className={`absolute z-10 mt-1 w-full rounded-lg shadow-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} border border-gray-200 max-h-60 overflow-y-auto`}>
+                  {user?.departments && user.departments.map(dept => (
+                    <label key={dept} className="flex items-center px-4 py-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-800">
+                      <input
+                        type="checkbox"
+                        checked={formData.departments?.includes(dept) || false}
+                        onChange={e => {
+                          const checked = e.target.checked;
+                          setFormData(prev => {
+                            let newDepts = prev.departments ? [...prev.departments] : [];
+                            if (checked) {
+                              if (!newDepts.includes(dept)) newDepts.push(dept);
+                            } else {
+                              newDepts = newDepts.filter(d => d !== dept);
+                            }
+                            return { ...prev, departments: newDepts };
+                          });
+                        }}
+                        className="mr-2"
+                      />
+                      {dept}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+            {formErrors.departments && <p className="text-red-500 text-sm mt-1">{formErrors.departments}</p>}
           </div>
 
           <div>

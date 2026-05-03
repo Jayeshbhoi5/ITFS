@@ -4,7 +4,7 @@ import LoginPage from "./LoginPage";
 import SignupPage from "./Signup";
 import ForgotPassword from "./ForgotPassword";
 import { Link } from "react-router-dom";
-import { FaUserGraduate, FaLaptopCode, FaCode, FaDatabase, FaGithub, FaLinkedin } from "react-icons/fa";
+import { FaUserGraduate, FaLaptopCode, FaCode, FaDatabase, FaEnvelope, FaPhone } from "react-icons/fa";
 
 export default function AboutUs() {
   const [showLogin, setShowLogin] = useState(false);
@@ -41,32 +41,32 @@ export default function AboutUs() {
       bio: 'Focused on database architecture and system integration for the project.',
       role: 'Roll no: 59',
       image: '/aaryas.jpg', // Add path to image
-      github: 'https://github.com/aryashewale',
-      linkedin: 'https://linkedin.com/in/aryashewale'
+      email: 'aaryashewale03@gmail.com',
+      phone: '+91 7588095796'
     },      
     {
       name: 'Aarya Thombare',
       bio: 'Contributed to the development of user interface and project documentation.',
       role: 'Roll no: 68',
       image: '/aaryat.png', 
-      github: 'https://github.com/aaryathombare',
-      linkedin: 'https://linkedin.com/in/aaryathombare'
+      email: 'aaryaathombre754@gmail.com',
+      phone: '+91 9356837438'
     },
     {
       name: 'Jayesh Bhoi',
       bio: 'Specialized in system development & implementation of feedback mechanisms.',
       role: 'Roll no: 10',
       image: '/jayesh4.png', 
-      github: 'https://github.com/jayeshbhoi',
-      linkedin: 'https://linkedin.com/in/jayeshbhoi'
+      email: 'jayeshb249@gmail.com',
+      phone: '+91 8208550878'
     },
     {
       name: 'Udaysingh Jagtap',
       bio: 'Contributed to research, design and development of the application interface.',
       role: 'Roll no: 27',
       image: '/uday1.png', // Add path to image
-      github: 'https://github.com/udayjagtap',
-      linkedin: 'https://linkedin.com/in/udayjagtap'
+      email: 'Udayjagtap8684@gmail.com',
+      phone: '+91 8010098286'
     }
   ];
 
@@ -190,27 +190,27 @@ export default function AboutUs() {
           <h4 className="text-xl font-semibold text-blue-800">{member.name}</h4>
           <p className="text-gray-700 font-medium mt-1">{member.role}</p>
           <p className="text-gray-600 mt-3">{member.bio}</p>
-          <div className="flex space-x-4 mt-4">
-            <a 
-              href={member.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 text-blue-800"
-            >
-              <FaGithub />
-            </a>
-            <a 
-              href={member.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 text-blue-800"
-            >
-              <FaLinkedin />
-            </a>
+          <div className="flex flex-col items-center space-y-2 mt-4 text-sm text-gray-600">
+            <div className="flex items-center">
+              <FaEnvelope className="mr-2 text-blue-800" />
+              <a href={`mailto:${member.email}`} className="hover:text-blue-600">{member.email}</a>
+            </div>
+            <div className="flex items-center">
+              <FaPhone className="mr-2 text-blue-800" />
+              <span>{member.phone}</span>
+            </div>
           </div>
         </div>
       </div>
     ))}
+  </div>
+</div>
+
+{/* Project Guide Section */}
+<div className="bg-white rounded-xl shadow-lg p-8 mb-12 border border-gray-200">
+  <h3 className="text-2xl font-bold text-blue-900 mb-4 text-center">Project Guide</h3>
+  <div className="text-center">
+    <p className="text-xl font-semibold text-gray-800">Dr. Vaishali S. Tidake</p>
   </div>
 </div>
 

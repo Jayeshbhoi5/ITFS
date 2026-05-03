@@ -285,7 +285,7 @@ const handleSubmit = async (e) => {
         activityId: activity.id,
         studentId: currentUser.uid,
         userId: currentUser.uid, // Add this field for compatibility
-        studentName: currentUser.displayName || userData?.name || 'Anonymous Student', // Modified this line
+        studentName: currentUser.displayName || 'Anonymous Student',
         userEmail: currentUser.email, // Add email for rule matching
         rating: formData.rating,
         understandability: formData.understandability,

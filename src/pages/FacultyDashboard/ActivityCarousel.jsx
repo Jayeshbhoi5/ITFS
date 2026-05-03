@@ -53,7 +53,6 @@ const ActivityCarousel = ({ darkMode, activities }) => {
       <div className={`p-6 rounded-lg shadow-md mb-8 transition-colors duration-300 ${
         darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'
       }`}>
-        <h3 className="text-xl font-bold mb-4">Faculty Dashboard</h3>
         <div className="text-center py-8 h-64 flex flex-col items-center justify-center">
           <div className={`w-16 h-16 rounded-full flex items-center justify-center text-4xl mb-4 ${
             darkMode ? 'bg-gray-700' : 'bg-gray-200'

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaCheckCircle } from "react-icons/fa";
 import { Button } from "./Button";
 import LoginPage from "./LoginPage";
@@ -11,6 +11,15 @@ export default function HomePage() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
+
+  useEffect(() => {
+    const hasSeenInstructions = localStorage.getItem('hasSeenInstructions');
+    if (!hasSeenInstructions) {
+      setShowInstructions(true);
+      localStorage.setItem('hasSeenInstructions', 'true');
+    }
+  }, []);
 
   const openLogin = () => {
     setShowLogin(true);
@@ -34,6 +43,7 @@ export default function HomePage() {
     setShowLogin(false);
     setShowSignup(false);
     setShowForgotPassword(false);
+    setShowInstructions(false);
   };
 
   return (
@@ -181,8 +191,8 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm z-50 flex items-center justify-center">
           {/* Login Modal */}
           {showLogin && (
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-0 mx-4 overflow-hidden">
-              <div className="flex h-[500px]">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-0 mx-4 overflow-hidden" style={{ width: '892px', height: '600px' }}>
+              <div className="flex h-full flex-shrink-0">
                 {/* Left side - College Image */}
                 <div className="hidden md:block w-1/2 bg-blue-100">
                   <img 
@@ -193,7 +203,7 @@ export default function HomePage() {
                 </div>
                 
                 {/* Right side - Login Form */}
-                <div className="w-full md:w-1/2 p-6">
+                <div className="w-full md:w-1/2 p-4 flex flex-col justify-center h-full">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-blue-900">Log In</h2>
                     <button 
@@ -204,11 +214,11 @@ export default function HomePage() {
                     </button>
                   </div>
                   {/* College Logo above login */}
-                  <div className="flex justify-center mb-6">
+                  <div className="flex justify-center mb-9">
                     <img 
                       src="/5.png" 
                       alt="KBTCOE Logo" 
-                      className="h-16 w-auto"
+                      className="h-20 w-auto"
                     />
                   </div>
                   <LoginPage 
@@ -223,8 +233,8 @@ export default function HomePage() {
 
           {/* Signup Modal */}
           {showSignup && (
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-0 mx-5 overflow-hidden">
-              <div className="flex h-[1900px] flex-shrink-0"> 
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-0 mx-5 overflow-hidden" style={{ width: '892px', height: '600px' }}>
+              <div className="flex h-full flex-shrink-0"> 
                 {/* Left side - College Image */}
                 <div className="hidden md:block w-1/2 bg-blue-100">
                   <img 
@@ -235,9 +245,9 @@ export default function HomePage() {
                 </div>
                 
                 {/* Right side - Signup Form */}
-                <div className="w-full md:w-1/2 p-4">
+                <div className="w-full md:w-1/2 p-4 flex flex-col justify-center h-full">
                   <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-xl font-bold text-blue-900">Sign Up</h2>
+                    <h2 className="text-2xl font-bold text-blue-900">Sign Up</h2>
                     <button 
                       onClick={closeModals}
                       className="text-gray-600 hover:text-gray-800 text-xl bg-transparent"
@@ -264,8 +274,8 @@ export default function HomePage() {
 
           {/* Forgot Password Modal */}
           {showForgotPassword && (
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-0 mx-4 overflow-hidden">
-              <div className="flex h-[500px]">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-0 mx-4 overflow-hidden" style={{ width: '892px', height: '600px' }}>
+              <div className="flex h-full flex-shrink-0">
                 {/* Left side - College Image */}
                 <div className="hidden md:block w-1/2 bg-blue-100">
                   <img 
@@ -276,7 +286,7 @@ export default function HomePage() {
                 </div>
                 
                 {/* Right side - Forgot Password Form */}
-                <div className="w-full md:w-1/2 p-6">
+                <div className="w-full md:w-1/2 p-4 flex flex-col justify-center h-full">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-blue-900">Reset Password</h2>
                     <button 
@@ -287,11 +297,11 @@ export default function HomePage() {
                     </button>
                   </div>
                   {/* College Logo above form */}
-                  <div className="flex justify-center mb-6">
+                  <div className="flex justify-center mb-0">
                     <img 
                       src="/5.png" 
                       alt="KBTCOE Logo" 
-                      className="h-16 w-auto"
+                      className="h-20 w-auto"
                     />
                   </div>
                   <ForgotPassword 
@@ -302,6 +312,30 @@ export default function HomePage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* First-time Instructions Modal */}
+      {showInstructions && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-8 relative flex flex-col items-center">
+            <img src="/5.png" alt="KBTCOE Logo" className="h-16 w-auto mb-4 mx-auto" />
+            <h2 className="text-2xl font-bold text-blue-800 mb-4 text-center">Welcome to Innovative Teaching Feedback</h2>
+            <ul className="list-disc pl-6 text-gray-800 text-base space-y-2 mb-4">
+              <li><b>HODs</b> should use their respective organization email (ending with <b>@kbtcoe.org</b> or the official HOD email).</li>
+              <li><b>Faculty</b> should use their respective organization email (ending with <b>@kbtcoe.org</b>).</li>
+              <li><b>Students</b> must use their respective <b>kbtug</b> or <b>stkbtcoe</b> email (ending with <b>@kbtcoe.org</b>).</li>
+              <li>All users must use their <b>organization email</b> to sign up or log in.</li>
+              <li>If you use <b>Forgot Password</b>, please check your <b>spam/junk folder</b> for the reset link.</li>
+              <li><b>Prefer Google Signup</b> for the best experience.</li>
+            </ul>
+            <button
+              onClick={() => setShowInstructions(false)}
+              className="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 rounded-lg mt-2 transition"
+            >
+              Got it!
+            </button>
+          </div>
         </div>
       )}
     </div>

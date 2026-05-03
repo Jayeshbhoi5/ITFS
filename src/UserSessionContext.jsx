@@ -46,8 +46,10 @@ export const UserSessionProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
+  const userRole = user ? user.role : null;
+
   return (
-    <UserSessionContext.Provider value={{ user, loading, setUser }}>
+    <UserSessionContext.Provider value={{ user, loading, userRole, setUser }}>
       {children}
     </UserSessionContext.Provider>
   );

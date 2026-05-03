@@ -33,12 +33,12 @@ export const ActivityProvider = ({ children }) => {
         });
       } 
       else if (user.role === 'Student') {
-        // Students see all activities
+        // Students see activities for any of their departments
         const q = query(
           collection(db, 'activities'),
+          where('departments', 'array-contains-any', user.departments),
           orderBy('createdAt', 'desc')
         );
-        
         unsubscribe = onSnapshot(q, (querySnapshot) => {
           const fetchedActivities = querySnapshot.docs.map(doc => ({
             id: doc.id,
@@ -67,7 +67,6 @@ export const ActivityProvider = ({ children }) => {
         ...newActivity,
         facultyId: user.uid,
         facultyName: user.name,
-        department: user.department || 'General',
         createdAt: serverTimestamp()
       });
 

@@ -2,16 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaBars, FaBell, FaUser, FaSignOutAlt } from 'react-icons/fa';
 import { getDarkModeFromStorage, setDarkModeInStorage } from './darkModeUtils';
 import { handleLogout } from './logoutUtils';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useUserSession } from '../../UserSessionContext';
 import LogoutConfirmation from '../../components/LogoutConfirmation';
+import DepartmentSelectionModal from '../../components/DepartmentSelectionModal';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+import AboutUs from '../AboutUs';
 
-const Navbar = ({ darkMode, setDarkMode, toggleSidebar, showProfileMenu, toggleProfileMenu, sidebarOpen, user }) => {
+const Navbar = ({ darkMode, setDarkMode, toggleSidebar, showProfileMenu, toggleProfileMenu, sidebarOpen, user, onEditDepartment }) => {
   const navigate = useNavigate();
-  const { user: sessionUser } = useUserSession();
+  const { user: sessionUser, setUser: setSessionUser } = useUserSession();
   const [showProfileInfo, setShowProfileInfo] = useState(false);
   const profileMenuRef = useRef(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showDepartmentModal, setShowDepartmentModal] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -35,7 +40,6 @@ const Navbar = ({ darkMode, setDarkMode, toggleSidebar, showProfileMenu, toggleP
   
   const handleProfileClick = (e) => {
     e.stopPropagation();
-    console.log("Profile button clicked, current state:", showProfileMenu);
     toggleProfileMenu();
   };
 
@@ -50,6 +54,31 @@ const Navbar = ({ darkMode, setDarkMode, toggleSidebar, showProfileMenu, toggleP
 
   const handleCancelLogout = () => {
     setShowLogoutConfirm(false);
+  };
+
+  const handleDepartmentUpdate = async (data) => {
+    if (!sessionUser) return;
+    
+    const userRef = doc(db, 'users', sessionUser.uid);
+    try {
+      await updateDoc(userRef, {
+        departments: data.departments,
+        primaryDepartment: data.primaryDepartment
+      });
+
+      // Update the session context immediately
+      const updatedUser = {
+        ...sessionUser,
+        departments: data.departments,
+        primaryDepartment: data.primaryDepartment
+      };
+      setSessionUser(updatedUser);
+
+      console.log('User departments updated successfully!');
+      setShowDepartmentModal(false); // Close modal on success
+    } catch (error) {
+      console.error('Error updating departments:', error);
+    }
   };
 
   const getNameFromEmail = (email) => {
@@ -71,6 +100,20 @@ const Navbar = ({ darkMode, setDarkMode, toggleSidebar, showProfileMenu, toggleP
   };
 
   const displayName = getNameFromEmail(sessionUser?.email);
+
+  // Helper to display departments
+  const renderDepartments = () => {
+    if (!user?.departments || user.departments.length === 0) return <span className="text-red-500">Not set</span>;
+    if (user.role === 'Faculty') {
+      return (
+        <div className="mt-1 text-xs text-blue-700 dark:text-blue-200">
+          <div><b>Primary:</b> {user.primaryDepartment || user.departments[0]}</div>
+          <div><b>All:</b> {user.departments.join(', ')}</div>
+        </div>
+      );
+    }
+    return <div className="mt-1 text-xs text-blue-700 dark:text-blue-200">{user.departments[0]}</div>;
+  };
 
   return (
     <>
@@ -96,15 +139,15 @@ const Navbar = ({ darkMode, setDarkMode, toggleSidebar, showProfileMenu, toggleP
         </div>
         
         <div className="flex items-center space-x-4">
-          <a href="/facultydashboard" className={`${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-700 hover:text-blue-600'} transition-colors duration-300`}>
+          <Link to="/faculty-dashboard" className={`${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-700 hover:text-blue-600'} transition-colors duration-300`}>
             Home
-          </a>
-          <a href="/about" className={`${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-700 hover:text-blue-600'} transition-colors duration-300`}>
+          </Link>
+          <Link to="/about" className={`${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-700 hover:text-blue-600'} transition-colors duration-300`}>
             About Us
-          </a>
-          <a href="/contact" className={`${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-700 hover:text-blue-600'} transition-colors duration-300`}>
+          </Link>
+          <Link to="/contact" className={`${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-700 hover:text-blue-600'} transition-colors duration-300`}>
             Contact Us
-          </a>
+          </Link>
           
         
           
@@ -136,11 +179,29 @@ const Navbar = ({ darkMode, setDarkMode, toggleSidebar, showProfileMenu, toggleP
                         {sessionUser.role}
                       </div>
                     )}
+                    {/* Department display */}
+                    <div className="mt-2">
+                      <span className="font-semibold text-xs">Department(s):</span>
+                      {renderDepartments()}
+                    </div>
                   </div>
+                )}
+                {/* Edit Department Option */}
+                {sessionUser?.role === 'Faculty' && (
+                  <button
+                    onClick={() => setShowDepartmentModal(true)}
+                    className={`block w-full text-left px-4 py-2 text-sm border-0 ${
+                      darkMode
+                        ? 'text-blue-400 hover:bg-gray-800 bg-transparent'
+                        : 'text-blue-700 hover:bg-gray-100 bg-transparent'
+                    } transition-colors duration-300`}
+                  >
+                    Edit Department
+                  </button>
                 )}
                 <button 
                   onClick={handleLogoutClick}
-                  className={`block w-full text-left px-4 py-2 text-sm ${
+                  className={`block w-full text-left px-4 py-2 text-sm border-0 ${
                     darkMode 
                       ? 'text-red-400 bg-transparent hover:bg-gray-800'  
                       : 'text-red-700 bg-transparent hover:bg-gray-100'  
@@ -160,6 +221,16 @@ const Navbar = ({ darkMode, setDarkMode, toggleSidebar, showProfileMenu, toggleP
         onConfirm={handleConfirmLogout}
         darkMode={darkMode}
       />
+      {sessionUser?.role === 'Faculty' && (
+        <DepartmentSelectionModal
+          isOpen={showDepartmentModal}
+          onClose={() => setShowDepartmentModal(false)}
+          onSubmit={handleDepartmentUpdate}
+          userType="faculty"
+          currentDepartments={sessionUser.departments || []}
+          canEdit={true}
+        />
+      )}
     </>
   );
 };

@@ -12,6 +12,7 @@
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
     "cloudinary-react": "^1.8.1",
+    "emailjs-com": "^3.2.0",
     "firebase": "^11.5.0",
     "lucide-react": "^0.477.0",
     "react": "^18.3.1",
