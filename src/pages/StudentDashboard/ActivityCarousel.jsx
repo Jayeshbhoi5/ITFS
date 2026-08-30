@@ -131,28 +131,15 @@ const ActivityCarousel = ({ darkMode, activities }) => {
                   alt={activities[currentIndex].title}
                   className="w-full h-full object-cover rounded-lg"
                 />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent rounded-b-lg">
+                <div className="absolute bottom-0 left-0 right-0 p-4 rounded-b-lg">
                   <div className="flex justify-between items-center">
-                    <h4 className="text-2xl font-bold px-3 py-1 rounded-full bg-blue-500 text-white">
-                      {activities[currentIndex].title}
-                    </h4>
-                    {activities[currentIndex].year && (
-                      <span className="text-sm px-3 py-1 rounded-full bg-green-500 text-white">
-                        Year: {activities[currentIndex].year}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex justify-between items-center mt-3">
-                    <p className="text-sm px-3 py-1 rounded-full bg-purple-500 text-white">
-                      Faculty: {activities[currentIndex].faculty || 'Not specified'}
-                    </p>
-                    <span className="text-sm px-3 py-1 rounded-full bg-orange-500 text-white">
-                      {activities[currentIndex].branch || 'Branch not specified'}
+                    <span className="text-sm font-bold text-white bg-blue-600 px-3 py-1 rounded-full shadow-md">
+                      {activities[currentIndex].faculty || activities[currentIndex].branch}
+                    </span>
+                    <span className="text-sm font-bold text-white bg-blue-600 px-3 py-1 rounded-full shadow-md">
+                      {activities[currentIndex].year}
                     </span>
                   </div>
-                  <p className="mt-3 text-white/80 text-sm">
-                    {activities[currentIndex].description}
-                  </p>
                 </div>
               </div>
             ) : (
@@ -160,23 +147,14 @@ const ActivityCarousel = ({ darkMode, activities }) => {
                 <div className="text-6xl opacity-50 mb-4">
                   {activities[currentIndex]?.title?.charAt(0) || '📊'}
                 </div>
-                <h4 className="text-2xl font-bold px-4 py-2 rounded-full bg-blue-500 text-white mb-3">
-                  {activities[currentIndex].title}
-                </h4>
-                <p className="text-lg px-4 py-2 rounded-full bg-purple-500 text-white mb-2">
-                  Faculty: {activities[currentIndex].faculty || 'Not specified'}
-                </p>
-                <p className="text-sm px-3 py-1 rounded-full bg-orange-500 text-white mb-3">
-                  Branch: {activities[currentIndex].branch || 'Not specified'}
-                </p>
-                {activities[currentIndex].year && (
-                  <p className="text-sm px-3 py-1 rounded-full bg-green-500 text-white">
-                    Year: {activities[currentIndex].year}
+                <div className="flex justify-between items-center mt-2 w-full">
+                  <p className="text-sm font-bold text-white bg-blue-600 px-3 py-1 rounded-full shadow-md">
+                    {activities[currentIndex].faculty || activities[currentIndex].branch}
                   </p>
-                )}
-                <p className="mt-4 text-sm text-center text-gray-700 dark:text-gray-300">
-                  {activities[currentIndex].description}
-                </p>
+                  <p className="text-sm font-bold text-white bg-blue-600 px-3 py-1 rounded-full shadow-md">
+                    {activities[currentIndex].year}
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -254,11 +232,20 @@ const ActivityCarousel = ({ darkMode, activities }) => {
               <button
                 key={index}
                 onClick={() => goToSlide(index)}
-                className={`h-0 w-8 mx-1.5 transition-all duration-300 ${
-                  index === currentIndex 
-                    ? (darkMode ? 'bg-blue-500' : 'bg-blue-600') 
-                    : (darkMode ? 'bg-gray-600' : 'bg-gray-300')
-                }`}
+                style={{
+                  width: index === currentIndex ? '10px' : '8px',
+                  height: index === currentIndex ? '10px' : '8px',
+                  borderRadius: '50%',
+                  margin: '0 4px',
+                  padding: 0,
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                }}
+                className={index === currentIndex
+                  ? (darkMode ? 'bg-blue-400' : 'bg-blue-600')
+                  : (darkMode ? 'bg-gray-500' : 'bg-gray-400')
+                }
                 aria-label={`Go to slide ${index + 1}`}
               />
             ))}

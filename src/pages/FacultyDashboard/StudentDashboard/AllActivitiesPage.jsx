@@ -8,6 +8,8 @@ import { useActivities } from "../FacultyDashboard/ActivityContext";
 import { useActivityUserStatus } from "./ActivityUserStatusManager";
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
+import { useUserSession } from '../../UserSessionContext';
+import { computeCurrentYearAndAcademic } from '../../components/DepartmentSelectionModal';
 
 const AllActivitiesPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -35,9 +37,22 @@ const AllActivitiesPage = () => {
 
   // Get dark mode from storage
   const [darkMode, setDarkMode] = useState(getDarkModeFromStorage());
+
+  // Get user session for default filter values
+  const { user } = useUserSession();
   
   // Get user status context
   const { submittedActivities = [], isActivitySubmitted = () => false, loading: statusLoading = false } = useActivityUserStatus() || {};
+
+  // Auto-set filters from user's saved year when user data loads
+  // Both year and academic year auto-advance each July 1 via computeCurrentYearAndAcademic()
+  useEffect(() => {
+    if (user?.baseYear && user?.yearSelectedAt) {
+      const { currentYear, academicYear } = computeCurrentYearAndAcademic(user.baseYear, user.yearSelectedAt);
+      setClassNameFilter(currentYear);
+      setAcademicYearFilter(academicYear);
+    }
+  }, [user?.baseYear, user?.yearSelectedAt]);
   
   // Toggle dark mode function
   const toggleDarkMode = () => {
@@ -480,7 +495,7 @@ const AllActivitiesPage = () => {
                 }`}
               >
                 <option value="">All Academic Years</option>
-                {['2027-28','2026-27','2025-26','2024-25', '2023-24', '2022-23', '2021-22', '2020-21'].map(year => (
+                {['2024-25','2025-26','2026-27','2027-28','2028-29','2029-30'].map(year => (
                   <option key={year} value={year}>{year}</option>
                 ))}
               </select>

@@ -180,20 +180,30 @@ const StudentDashboard = () => {
   };
 
   // Save department selection to Firestore
-  const handleDeptSubmit = async ({ departments }) => {
+  const handleDeptSubmit = async ({ departments, year, academicYear, yearSelectedAt }) => {
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
     try {
       const newChangeCount = deptEditMode ? 1 : (user.departmentChangeCount || 0);
-      await updateDoc(userRef, {
+      const updateData = {
         departments,
         departmentChangeCount: newChangeCount,
-      });
+      };
+      if (year) {
+        updateData.baseYear = year;
+        updateData.yearSelectedAt = yearSelectedAt;
+      }
+      if (academicYear) {
+        updateData.academicYear = academicYear;
+      }
+      await updateDoc(userRef, updateData);
 
       setUser({
         ...user,
         departments,
         departmentChangeCount: newChangeCount,
+        ...(year ? { baseYear: year, yearSelectedAt } : {}),
+        ...(academicYear ? { academicYear } : {}),
       });
       
       setShowDeptModal(false);
