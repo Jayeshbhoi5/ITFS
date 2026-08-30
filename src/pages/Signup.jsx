@@ -18,7 +18,6 @@ const HOD_EMAILS = {
   "hod.it@kbtcoe.org": "Information Technology",
  "innovativeteachingfeedback@gmail.com": "Computer Engineering",
 "hod.entc@kbtcoe.org":"Electronics and Telecommunication Engineering",
-"hod.entc@kbtcoe.org":"Electronics and Telecommunication Engineering",
 
 "hod.aids@kbtcoe.org":"Artificial Intelligence and Data Science Engineering",
 
