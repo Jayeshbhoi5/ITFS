@@ -1,13 +1,6 @@
 # Deploys to Firebase on every push to master
 # Deploys: Hosting + Firestore rules + Firestore indexes
 # Does NOT deploy: Firebase Functions
-#
-# REQUIRED: The service account in FIREBASE_SERVICE_ACCOUNT_INNOVATIVE_TEACHING_FEED_2D77A
-# must have these IAM roles in Google Cloud Console:
-#   - Firebase Hosting Admin (already set)
-#   - Firebase Rules Admin
-#   - Cloud Datastore Index Admin
-#   - Service Usage Consumer
 
 name: Deploy to Firebase on merge
 
@@ -42,9 +35,68 @@ jobs:
           channelId: live
           projectId: innovative-teaching-feed-2d77a
 
-      - name: Deploy Firestore rules and indexes
+      - name: Deploy Firestore rules via REST API
         run: |
+          # Get access token from service account
           echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_INNOVATIVE_TEACHING_FEED_2D77A }}' > /tmp/sa.json
-          npm install -g firebase-tools
-          GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json firebase deploy --only firestore --project innovative-teaching-feed-2d77a
+          
+          # Install gcloud auth helper
+          pip install google-auth requests --quiet
+          
+          # Deploy rules using Firebase Rules REST API
+          python3 << 'EOF'
+          import json, requests, google.auth, google.auth.transport.requests
+          from google.oauth2 import service_account
+
+          PROJECT = "innovative-teaching-feed-2d77a"
+
+          # Load service account
+          creds = service_account.Credentials.from_service_account_file(
+              "/tmp/sa.json",
+              scopes=["https://www.googleapis.com/auth/cloud-platform"]
+          )
+          auth_req = google.auth.transport.requests.Request()
+          creds.refresh(auth_req)
+          token = creds.token
+
+          headers = {
+              "Authorization": f"Bearer {token}",
+              "Content-Type": "application/json"
+          }
+
+          # Read rules file
+          with open("firestore.rules", "r") as f:
+              rules_content = f.read()
+
+          # Create a new ruleset
+          ruleset_body = {
+              "source": {
+                  "files": [{"content": rules_content, "name": "firestore.rules"}]
+              }
+          }
+          r = requests.post(
+              f"https://firebaserules.googleapis.com/v1/projects/{PROJECT}/rulesets",
+              headers=headers,
+              json=ruleset_body
+          )
+          r.raise_for_status()
+          ruleset_name = r.json()["name"]
+          print(f"Created ruleset: {ruleset_name}")
+
+          # Update the release to point to new ruleset
+          release_body = {
+              "release": {
+                  "name": f"projects/{PROJECT}/releases/cloud.firestore",
+                  "rulesetName": ruleset_name
+              }
+          }
+          r = requests.patch(
+              f"https://firebaserules.googleapis.com/v1/projects/{PROJECT}/releases/cloud.firestore",
+              headers=headers,
+              json=release_body
+          )
+          r.raise_for_status()
+          print("Firestore rules deployed successfully")
+          EOF
+
           rm -f /tmp/sa.json
