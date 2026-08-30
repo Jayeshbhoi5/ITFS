@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { FaCheckCircle } from "react-icons/fa";
-import { Button } from "./Button";
 import LoginPage from "./LoginPage";
 import SignupPage from "./Signup";
 import Abouthome from "./Abouthome";
@@ -91,13 +90,12 @@ export default function HomePage() {
           <a href="#benefits" className="text-blue-900 hover:text-blue-700 text-sm md:text-base">Benefits</a>
           {/* Changed "Team" to "About Us" and linked to separate page */}
           <Link to="/abouthome" className="text-blue-900 hover:text-blue-700 text-sm md:text-base">About Us</Link>
-          <Button 
-            variant="secondary" 
-            className="bg-blue-700 hover:bg-blue-600 text-white px-3 py-2 text-sm md:text-base"
+          <button 
+            className="bg-blue-700 hover:bg-blue-600 text-white px-3 py-2 text-sm md:text-base rounded font-medium transition-all duration-200"
             onClick={openSignup}
           >
             Sign Up
-          </Button>
+          </button>
         </div>
       </nav>
 
@@ -109,13 +107,12 @@ export default function HomePage() {
           <p className="text-gray-700 mt-6 max-w-2xl text-lg">
             A seamless platform for faculty and students to engage in meaningful feedback, driving educational excellence at KBTCOE.
           </p>
-          <Button 
-            variant="secondary" 
-            className="mt-8 bg-blue-700 hover:bg-blue-600 text-white px-6 py-3 text-lg"
+          <button 
+            className="mt-8 bg-blue-700 hover:bg-blue-600 text-white px-6 py-3 text-lg rounded font-medium transition-all duration-200"
             onClick={openSignup}
           >
             Get Started
-          </Button>
+          </button>
         </div>
         <div className="w-full md:w-1/2 flex justify-center">
           <img 
