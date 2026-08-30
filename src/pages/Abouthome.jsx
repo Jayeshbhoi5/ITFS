@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Button } from "./Button";
 import LoginPage from "./LoginPage";
 import SignupPage from "./Signup";
 import ForgotPassword from "./ForgotPassword";
@@ -116,13 +115,12 @@ export default function AboutUs() {
           <Link to="/#features" className="text-blue-900 hover:text-blue-700 text-sm md:text-base">Features</Link>
           <Link to="/#benefits" className="text-blue-900 hover:text-blue-700 text-sm md:text-base">Benefits</Link>
           <Link to="/abouthome" className="text-blue-900 hover:text-blue-700 font-bold text-sm md:text-base">About Us</Link>
-          <Button 
-            variant="secondary" 
-            className="bg-blue-700 hover:bg-blue-600 text-white px-3 py-2 text-sm md:text-base"
+          <button 
+            className="bg-blue-700 hover:bg-blue-600 text-white px-3 py-2 text-sm md:text-base rounded font-medium transition-all duration-200"
             onClick={openSignup}
           >
             Sign Up
-          </Button>
+          </button>
         
         </div>
       </nav>
