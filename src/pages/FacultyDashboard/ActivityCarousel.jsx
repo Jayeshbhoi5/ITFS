@@ -117,19 +117,13 @@ const ActivityCarousel = ({ darkMode, activities }) => {
                 </div>
               </div>
             )}
-            <div className="w-full h-full flex flex-col justify-end bg-gradient-to-t from-black/70 to-transparent rounded-lg">
-              <div className="p-6 text-white">
-                <h4 className="text-2xl font-bold">{activities[currentIndex].title}</h4>
-                <p className="mt-2">{activities[currentIndex].description}</p>
-                <div className="flex justify-between mt-2">
-                  <span className={`px-3 py-1 rounded-full text-sm ${
-                    darkMode ? 'bg-blue-600' : 'bg-blue-500 text-white'
-                  }`}>
+            <div className="w-full h-full flex flex-col justify-end rounded-lg">
+              <div className="p-4 text-white">
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-sm font-bold text-white bg-blue-600 px-3 py-1 rounded-full shadow-md">
                     {activities[currentIndex].branch}
                   </span>
-                  <span className={`px-3 py-1 rounded-full text-sm ${
-                    darkMode ? 'bg-green-600' : 'bg-green-500 text-white'
-                  }`}>
+                  <span className="text-sm font-bold text-white bg-blue-600 px-3 py-1 rounded-full shadow-md">
                     {activities[currentIndex].year}
                   </span>
                 </div>
@@ -178,22 +172,30 @@ const ActivityCarousel = ({ darkMode, activities }) => {
           `}
         />
 
-        {/* Line texture indicator instead of dots */}
-     
+        {/* Dot indicators */}
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center z-30">
-  {activities.map((_, index) => (
-    <button
-      key={index}
-      onClick={() => goToSlide(index)}
-      className={`h-1 w-8 mx-1.5 transition-all duration-300 ${
-        index === currentIndex 
-          ? (darkMode ? 'bg-blue-500' : 'bg-blue-600') 
-          : (darkMode ? 'bg-gray-600' : 'bg-gray-300')
-      }`}
-      aria-label={`Go to slide ${index + 1}`}
-    />
-  ))}
-</div>
+          {activities.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              style={{
+                width: index === currentIndex ? '10px' : '8px',
+                height: index === currentIndex ? '10px' : '8px',
+                borderRadius: '50%',
+                margin: '0 4px',
+                padding: 0,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+              }}
+              className={index === currentIndex
+                ? (darkMode ? 'bg-blue-400' : 'bg-blue-600')
+                : (darkMode ? 'bg-gray-500' : 'bg-gray-400')
+              }
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

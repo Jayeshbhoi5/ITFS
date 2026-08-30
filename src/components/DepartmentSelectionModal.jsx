@@ -14,6 +14,46 @@ const DEPARTMENTS = [
   'Master of Business Administration'
 ];
 
+const YEARS = ['FE', 'SE', 'TE', 'BE'];
+const ACADEMIC_YEARS = ['2024-25','2025-26','2026-27','2027-28','2028-29','2029-30'];
+
+// Given a base year (e.g. 'TE') and the date it was selected,
+// compute the current effective year and academic year as of today.
+// Advances by one step each July 1.
+export const computeCurrentYearAndAcademic = (baseYear, selectedAt) => {
+  const yearOrder = ['FE', 'SE', 'TE', 'BE'];
+  const now = new Date();
+  const selected = selectedAt ? new Date(selectedAt) : now;
+
+  let advances = 0;
+  let nextJuly = new Date(selected.getFullYear(), 6, 1);
+  if (nextJuly <= selected) {
+    nextJuly = new Date(selected.getFullYear() + 1, 6, 1);
+  }
+  while (nextJuly <= now) {
+    advances++;
+    nextJuly = new Date(nextJuly.getFullYear() + 1, 6, 1);
+  }
+
+  const baseIndex = yearOrder.indexOf(baseYear);
+  const currentIndex = Math.min(baseIndex + advances, yearOrder.length - 1);
+  const currentYear = yearOrder[currentIndex];
+
+  const month = now.getMonth();
+  const academicStartYear = month >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+  const academicYear = `${academicStartYear}-${String(academicStartYear + 1).slice(-2)}`;
+
+  return { currentYear, academicYear };
+};
+
+// Compute current academic year from today's date (July–June cycle)
+const getCurrentAcademicYear = () => {
+  const now = new Date();
+  const month = now.getMonth(); // 0-based; July = 6
+  const startYear = month >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+  return `${startYear}-${String(startYear + 1).slice(-2)}`;
+};
+
 const DepartmentSelectionModal = ({
   isOpen,
   onClose,
@@ -24,6 +64,8 @@ const DepartmentSelectionModal = ({
 }) => {
   const [selectedDepartments, setSelectedDepartments] = useState(currentDepartments);
   const [primaryDepartment, setPrimaryDepartment] = useState(currentDepartments[0] || '');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState(getCurrentAcademicYear());
   const [error, setError] = useState('');
   const [confirm, setConfirm] = useState(false);
 
@@ -71,6 +113,14 @@ const DepartmentSelectionModal = ({
         setError('Please select your department.');
         return;
       }
+      if (!selectedYear) {
+        setError('Please select your current year (FE/SE/TE/BE).');
+        return;
+      }
+      if (!selectedAcademicYear) {
+        setError('Please select your current academic year.');
+        return;
+      }
     }
     setConfirm(true);
   };
@@ -83,7 +133,10 @@ const DepartmentSelectionModal = ({
       });
     } else {
       onSubmit({
-        departments: selectedDepartments
+        departments: selectedDepartments,
+        year: selectedYear,
+        academicYear: selectedAcademicYear,
+        yearSelectedAt: new Date().toISOString(),
       });
     }
     setConfirm(false);
@@ -139,6 +192,42 @@ const DepartmentSelectionModal = ({
                   <option key={dept} value={dept}>{dept}</option>
                 ))}
               </select>
+            </div>
+          )}
+          {userType === 'student' && (
+            <div className="mb-4 flex gap-4">
+              <div className="flex-1">
+                <label className="block mb-1 font-semibold text-gray-700 dark:text-gray-200">
+                  Current Year <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedYear}
+                  onChange={e => { setSelectedYear(e.target.value); setError(''); }}
+                  disabled={!isEditable}
+                  className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+                >
+                  <option value="">Select year</option>
+                  {YEARS.map(yr => (
+                    <option key={yr} value={yr}>{yr}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="block mb-1 font-semibold text-gray-700 dark:text-gray-200">
+                  Academic Year <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedAcademicYear}
+                  onChange={e => { setSelectedAcademicYear(e.target.value); setError(''); }}
+                  disabled={!isEditable}
+                  className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+                >
+                  <option value="">Select academic year</option>
+                  {ACADEMIC_YEARS.map(ay => (
+                    <option key={ay} value={ay}>{ay}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
           <div className="flex justify-end gap-2 mt-6">
