@@ -61,17 +61,20 @@ service cloud.firestore {
 
     // FEEDBACK: Combined rules for all user types
     match /feedback/{feedbackId} {
-      allow list: if isRole('HOD') || isRole('Faculty');
+      allow list: if request.auth != null;
 
       function isHodAuthorized() {
-        let activityId = resource.data.activityId;
-        let activityPath = /databases/$(database)/documents/activities/$(activityId);
+        let actId = resource.data.activityId;
+        let activityPath = /databases/$(database)/documents/activities/$(actId);
         return exists(activityPath) && isRole('HOD') && isFacultyInHodDepartment(get(activityPath).data.facultyId);
       }
 
-      allow read: if request.auth.uid == resource.data.studentId ||
+      allow read: if request.auth != null && (
+                     request.auth.uid == resource.data.studentId ||
+                     request.auth.uid == resource.data.userId ||
                      get(/databases/$(database)/documents/activities/$(resource.data.activityId)).data.facultyId == request.auth.uid ||
-                     isHodAuthorized();
+                     isHodAuthorized()
+                  );
       
       // Student-specific create rule with department check
       allow create: if isRole('Student') &&
