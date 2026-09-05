@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Sidebar from './StudentSidebar';
 import Navbar from './Navbar';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaSearch, FaCalendarAlt, FaUser, FaChalkboardTeacher, FaStar, FaEdit, FaEye } from 'react-icons/fa';
+import { FaSearch, FaCalendarAlt, FaUser, FaChalkboardTeacher, FaStar, FaEdit, FaEye, FaExpand, FaTimes, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { getDarkModeFromStorage, setDarkModeInStorage } from './darkModeUtils';
 import { useActivities } from "../FacultyDashboard/ActivityContext";
 import { useActivityUserStatus } from "./ActivityUserStatusManager";
@@ -27,7 +27,8 @@ const AllActivitiesPage = () => {
   const [showToast, setShowToast] = useState(false);
   const [feedbackEditStatus, setFeedbackEditStatus] = useState({});
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [modalImageUrl, setModalImageUrl] = useState('');
+  const [modalImages, setModalImages] = useState([]);
+  const [activeModalImageIndex, setActiveModalImageIndex] = useState(0);
   const [expandedActivityId, setExpandedActivityId] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -209,6 +210,22 @@ const AllActivitiesPage = () => {
               }
             }
             
+            // Extract all image URLs
+            const allImages = [];
+            if (latestData.mainImage) allImages.push(latestData.mainImage);
+            if (Array.isArray(latestData.fileUrls)) {
+              latestData.fileUrls.forEach(f => {
+                const url = typeof f === 'string' ? f : f?.url;
+                if (url && !allImages.includes(url)) allImages.push(url);
+              });
+            }
+            if (Array.isArray(latestData.images)) {
+              latestData.images.forEach(img => {
+                const url = typeof img === 'string' ? img : img?.url;
+                if (url && !allImages.includes(url)) allImages.push(url);
+              });
+            }
+
             return {
               id: latestData.id,
               title: latestData.activityName || 'Untitled Activity',
@@ -218,7 +235,10 @@ const AllActivitiesPage = () => {
               faculty: latestData.facultyName || '',
               date: formattedDate,
               dueDate: dueDate.toISOString().split('T')[0],
-              image: latestData.mainImage || 'https://placehold.co/600x400/lightgray/white?text=Activity',
+              image: latestData.mainImage || (allImages.length > 0 ? allImages[0] : 'https://placehold.co/600x400/lightgray/white?text=Activity'),
+              images: allImages,
+              fileUrls: latestData.fileUrls || [],
+              mainImage: latestData.mainImage || null,
               totalUsers: latestData.totalStudents || 0,
               averageRating: latestData.averageRating || 0,
               userRating: userRating,
@@ -316,17 +336,22 @@ const AllActivitiesPage = () => {
   const handleActivitySelect = (activityId) => {
     const selectedActivity = activities.find(activity => activity.id === activityId);
     if (selectedActivity) {
-      localStorage.setItem('selectedActivity', JSON.stringify(selectedActivity));
       navigate(`/ProvideFeedbackPage/${activityId}`, {
-        state: { fromActivities: true }
+        state: {
+          activity: selectedActivity,
+          fromActivities: true
+        }
       });
     }
   };
 
   const handleViewFeedback = (activityId) => {
-    setTimeout(() => {
-      navigate(`/viewfeedbackpage/${activityId}`);
-    }, 100);
+    const selectedActivity = activities.find(activity => activity.id === activityId);
+    navigate(`/viewfeedbackpage/${activityId}`, {
+      state: {
+        activity: selectedActivity
+      }
+    });
   };
 
   const handleEditFeedback = async (activityId) => {
@@ -401,14 +426,41 @@ const AllActivitiesPage = () => {
     return (sum / submittedActivities.length).toFixed(1);
   }, [submittedActivities, activityRatings]);
 
-  const openImageModal = (imageUrl) => {
-    setModalImageUrl(imageUrl);
+  const openImageModal = (activityOrImages, initialIndex = 0) => {
+    let imagesList = [];
+    if (Array.isArray(activityOrImages)) {
+      imagesList = activityOrImages;
+    } else if (activityOrImages && typeof activityOrImages === 'object') {
+      if (Array.isArray(activityOrImages.images) && activityOrImages.images.length > 0) {
+        imagesList = activityOrImages.images;
+      } else if (activityOrImages.mainImage) {
+        imagesList = [activityOrImages.mainImage];
+      } else if (activityOrImages.image) {
+        imagesList = [activityOrImages.image];
+      }
+    } else if (typeof activityOrImages === 'string') {
+      imagesList = [activityOrImages];
+    }
+    
+    setModalImages(imagesList);
+    setActiveModalImageIndex(initialIndex);
     setIsImageModalOpen(true);
+  };
+
+  const handlePrevModalImage = (e) => {
+    if (e) e.stopPropagation();
+    setActiveModalImageIndex(prev => (prev === 0 ? modalImages.length - 1 : prev - 1));
+  };
+
+  const handleNextModalImage = (e) => {
+    if (e) e.stopPropagation();
+    setActiveModalImageIndex(prev => (prev === modalImages.length - 1 ? 0 : prev + 1));
   };
 
   const closeImageModal = () => {
     setIsImageModalOpen(false);
-    setModalImageUrl('');
+    setModalImages([]);
+    setActiveModalImageIndex(0);
   };
 
   return (
@@ -550,32 +602,61 @@ const AllActivitiesPage = () => {
                   }`}
                 >
                   <div className="flex flex-col md:flex-row">
-                    <div className="md:w-64 h-48 flex-shrink-0">
-                      <img 
-                        src={activity.image} 
-                        alt={activity.title} 
-                        className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => openImageModal(activity.image)}
-                        onError={(e) => {
-                          e.target.src = 'https://placehold.co/600x400/lightgray/white?text=Activity';
-                        }}
-                      />
+                    <div className="p-3.5 flex items-center justify-center flex-shrink-0">
+                      <div 
+                        className="relative group cursor-pointer select-none p-1.5"
+                        onClick={() => openImageModal(activity)}
+                        title="Click to view photo"
+                      >
+                        {/* Layer 1: background tilt card */}
+                        <div className="absolute inset-1.5 rounded-2xl bg-indigo-200 dark:bg-indigo-900/60 transform rotate-6 scale-95 opacity-70 group-hover:rotate-12 transition-transform duration-300"></div>
+                        {/* Layer 2: secondary tilt card */}
+                        <div className="absolute inset-1.5 rounded-2xl bg-blue-200 dark:bg-blue-800/60 transform -rotate-3 scale-95 opacity-80 group-hover:-rotate-6 transition-transform duration-300"></div>
+                        {/* Foreground main card */}
+                        <div className="relative w-44 h-36 sm:w-48 sm:h-44 rounded-2xl overflow-hidden shadow-md border-2 border-white dark:border-gray-800 bg-gray-100 dark:bg-gray-750 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
+                          <img 
+                            src={activity.image} 
+                            alt={activity.title} 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.src = 'https://placehold.co/600x400/lightgray/white?text=Activity';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold backdrop-blur-xs gap-1">
+                            <FaExpand className="text-xs" />
+                            <span>View</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div className="p-4 flex-grow flex flex-col justify-between">
                       <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-lg font-semibold">{activity.title}</h3>
-                          <div className="flex space-x-2">
-                            <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs">
+                        <div className="flex justify-between items-start mb-2 gap-2">
+                          <h3
+                            className="text-lg font-semibold overflow-hidden"
+                            style={{
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              wordBreak: 'break-word',
+                              flex: '1 1 0%',
+                            }}
+                            title={activity.title}
+                          >
+                            {activity.title}
+                          </h3>
+                          <div className="flex flex-wrap gap-1 flex-shrink-0 justify-end" style={{ maxWidth: '55%' }}>
+                            <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs whitespace-nowrap">
                               {activity.academicYear}
                             </span>
-                            <span className="bg-purple-500 text-white px-2 py-1 rounded-full text-xs">
+                            <span className="bg-purple-500 text-white px-2 py-1 rounded-full text-xs whitespace-nowrap">
                               {activity.branch}
                             </span>
-                            <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs">
+                            <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs whitespace-nowrap">
                               {activity.year}
                             </span>
-                            <span className={`px-2 py-1 rounded-full text-xs ${
+                            <span className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ${
                               activity.status === 'pending'
                                 ? (darkMode ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800')
                                 : (darkMode ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800')
@@ -726,23 +807,120 @@ const AllActivitiesPage = () => {
           </div>
         </div>
       )}
-      {isImageModalOpen && (
+      {isImageModalOpen && modalImages.length > 0 && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center"
+          className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 transition-all ${
+            darkMode ? 'bg-black/75 backdrop-blur-xs' : 'bg-gray-900/40 backdrop-blur-xs'
+          }`}
           onClick={closeImageModal}
         >
           <div 
-            className="relative bg-white p-4 rounded-lg shadow-lg max-w-4xl max-h-[90vh]"
+            className={`relative max-w-2xl w-full rounded-2xl shadow-2xl overflow-hidden transition-all flex flex-col ${
+              darkMode ? 'bg-gray-800 text-white border border-gray-700' : 'bg-white text-gray-900 border border-gray-200'
+            }`}
+            style={{ maxHeight: 'calc(100vh - 40px)', boxSizing: 'border-box' }}
             onClick={e => e.stopPropagation()}
           >
-            <button
-              onClick={closeImageModal}
-              className="absolute -top-4 -right-4 text-white bg-gray-800 rounded-full p-2 text-2xl leading-none"
-              style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            <div 
+              className={`relative w-full min-h-0 flex-1 rounded-xl overflow-hidden flex items-center justify-center p-2 ${
+                darkMode ? 'bg-gray-900' : 'bg-gray-50 border border-gray-100'
+              }`}
+              style={{ maxHeight: 'calc(100vh - 80px)' }}
             >
-              &times;
-            </button>
-            <img src={modalImageUrl} alt="Full size activity" className="object-contain" style={{ maxHeight: '85vh' }} />
+              {/* Counter pill top-left */}
+              {modalImages.length > 1 && (
+                <span
+                  className="absolute top-2.5 left-2.5 z-10 text-xs px-2.5 py-1 rounded-full font-semibold pointer-events-none"
+                  style={{
+                    background: darkMode ? 'rgba(31,41,55,0.85)' : 'rgba(255,255,255,0.88)',
+                    color: darkMode ? '#d1d5db' : '#374151',
+                    backdropFilter: 'blur(4px)',
+                    border: darkMode ? '1px solid rgba(75,85,99,0.5)' : '1px solid rgba(209,213,219,0.7)'
+                  }}
+                >
+                  {activeModalImageIndex + 1} / {modalImages.length}
+                </span>
+              )}
+
+              {/* Close button top-right */}
+              <button
+                type="button"
+                onClick={closeImageModal}
+                className="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                style={{
+                  background: darkMode ? 'rgba(31,41,55,0.85)' : 'rgba(255,255,255,0.88)',
+                  color: darkMode ? '#e5e7eb' : '#374151',
+                  backdropFilter: 'blur(4px)',
+                  border: darkMode ? '1px solid rgba(75,85,99,0.5)' : '1px solid rgba(209,213,219,0.7)',
+                  padding: 0
+                }}
+                title="Close"
+              >
+                <FaTimes className="text-sm" />
+              </button>
+
+              <img 
+                src={modalImages[activeModalImageIndex] || modalImages[0]} 
+                alt="Activity preview" 
+                style={{ maxHeight: 'calc(100vh - 100px)', maxWidth: '100%', objectFit: 'contain' }}
+                className="select-none" 
+              />
+
+              {/* Left Arrow */}
+              {modalImages.length > 1 && (
+                <button
+                  type="button"
+                  onClick={handlePrevModalImage}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-all cursor-pointer border active:scale-95"
+                  style={{
+                    background: darkMode ? '#374151' : '#ffffff',
+                    borderColor: darkMode ? '#4b5563' : '#d1d5db',
+                    color: darkMode ? '#f3f4f6' : '#1f2937',
+                    padding: 0
+                  }}
+                  title="Previous image"
+                >
+                  <FaChevronLeft className="text-sm" />
+                </button>
+              )}
+
+              {/* Right Arrow */}
+              {modalImages.length > 1 && (
+                <button
+                  type="button"
+                  onClick={handleNextModalImage}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-all cursor-pointer border active:scale-95"
+                  style={{
+                    background: darkMode ? '#374151' : '#ffffff',
+                    borderColor: darkMode ? '#4b5563' : '#d1d5db',
+                    color: darkMode ? '#f3f4f6' : '#1f2937',
+                    padding: 0
+                  }}
+                  title="Next image"
+                >
+                  <FaChevronRight className="text-sm" />
+                </button>
+              )}
+            </div>
+
+            {/* Dot indicators */}
+            {modalImages.length > 1 && (
+              <div className="flex justify-center gap-1.5 py-2 flex-shrink-0">
+                {modalImages.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveModalImageIndex(idx)}
+                    className={`h-2 rounded-full transition-all cursor-pointer ${
+                      idx === activeModalImageIndex
+                        ? 'w-6 bg-blue-600'
+                        : 'w-2 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'
+                    }`}
+                    style={{ border: 'none', padding: 0 }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

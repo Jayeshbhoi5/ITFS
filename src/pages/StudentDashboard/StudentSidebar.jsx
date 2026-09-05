@@ -55,31 +55,35 @@ const StudentSidebar = ({ toggleDarkMode, darkMode, setDarkMode, sidebarOpen, to
             <div className="flex flex-col space-y-5 items-center mt-28">
               <Link to="/student-dashboard" className={`p-2 rounded-xl transition-all duration-200 shadow-sm ${
                 activePage === "dashboard"
-                  ? 'bg-blue-100 text-blue-700 shadow-md'
-                  : 'text-blue-700 hover:bg-gray-900 hover:text-blue-600 hover:shadow'
+                  ? (darkMode ? 'bg-blue-900/50 text-blue-300 shadow-md' : 'bg-blue-100 text-blue-700 shadow-md')
+                  : (darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' : 'text-blue-700 hover:bg-blue-50 hover:text-blue-600 hover:shadow')
               }`}>
-                <FaHome className={`text-xl ${activePage === "dashboard" ? 'text-blue-600' : ''}`} />
+                <FaHome className={`text-xl ${activePage === "dashboard" ? (darkMode ? 'text-blue-400' : 'text-blue-600') : ''}`} />
               </Link>
               <Link to="/AllActivitiesPage" className={`p-2 rounded-xl transition-all duration-200 shadow-sm ${
                 activePage === "all-activities"
-                  ? 'bg-blue-100 text-blue-700 shadow-md'
-                  : 'text-blue-700 hover:bg-gray-900 hover:text-blue-600 hover:shadow'
+                  ? (darkMode ? 'bg-blue-900/50 text-blue-300 shadow-md' : 'bg-blue-100 text-blue-700 shadow-md')
+                  : (darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' : 'text-blue-700 hover:bg-blue-50 hover:text-blue-600 hover:shadow')
               }`}>
-                <FaClipboardList className={`text-xl ${activePage === "all-activities" ? 'text-blue-600' : ''}`} />
+                <FaClipboardList className={`text-xl ${activePage === "all-activities" ? (darkMode ? 'text-blue-400' : 'text-blue-600') : ''}`} />
               </Link>
             </div>
             
             <div className="absolute bottom-6 flex flex-col space-y-6 items-center">
               <button 
                 onClick={() => setDarkMode(!darkMode)} 
-                className="text-gray-800 bg-transparent border-0 rounded-xl transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-900"
+                className={`p-2 rounded-xl transition-all duration-200 ${
+                  darkMode ? 'text-yellow-400 hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-100'
+                }`}
                 style={{ backgroundColor: 'transparent' }}
               >
-                {darkMode ? <FaSun className="text-xl text-yellow-400" /> : <FaMoon className="text-xl text-gray-800" />}
+                {darkMode ? <FaSun className="text-xl" /> : <FaMoon className="text-xl" />}
               </button>
               <button 
                 onClick={handleLogoutClick}
-                className="text-red-700 bg-transparent border-0 rounded-xl transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-900"
+                className={`p-2 rounded-xl transition-all duration-200 text-red-600 ${
+                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
                 style={{ backgroundColor: 'transparent' }}
               >
                 <FaSignOutAlt className="text-xl" />
@@ -100,20 +104,20 @@ const StudentSidebar = ({ toggleDarkMode, darkMode, setDarkMode, sidebarOpen, to
                 <li>
                   <Link to="/student-dashboard" className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 shadow-sm ${
                     activePage === "dashboard"
-                      ? 'bg-blue-100 text-blue-600 shadow-md'
-                      : 'text-blue-700 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-600 hover:shadow'
+                      ? (darkMode ? 'bg-blue-900/50 text-blue-300 shadow-md' : 'bg-blue-100 text-blue-600 shadow-md')
+                      : (darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400 hover:shadow' : 'text-blue-700 hover:bg-blue-50 hover:text-blue-600 hover:shadow')
                   }`}>
-                    <FaHome className={`text-xl ${activePage === "dashboard" ? 'text-blue-600' : ''}`} />
+                    <FaHome className={`text-xl ${activePage === "dashboard" ? (darkMode ? 'text-blue-400' : 'text-blue-600') : ''}`} />
                     <span className="font-medium">Dashboard</span>
                   </Link>
                 </li>
                 <li>
                   <Link to="/AllActivitiesPage" className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 shadow-sm ${
                     activePage === "all-activities"
-                      ? 'bg-blue-100 text-blue-600 shadow-md'
-                      : 'text-blue-700 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-600 hover:shadow'
+                      ? (darkMode ? 'bg-blue-900/50 text-blue-300 shadow-md' : 'bg-blue-100 text-blue-600 shadow-md')
+                      : (darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400 hover:shadow' : 'text-blue-700 hover:bg-blue-50 hover:text-blue-600 hover:shadow')
                   }`}>
-                    <FaClipboardList className={`text-xl ${activePage === "all-activities" ? 'text-blue-600' : ''}`} />
+                    <FaClipboardList className={`text-xl ${activePage === "all-activities" ? (darkMode ? 'text-blue-400' : 'text-blue-600') : ''}`} />
                     <span className="font-medium">All Activities</span>
                   </Link>
                 </li>
@@ -123,7 +127,9 @@ const StudentSidebar = ({ toggleDarkMode, darkMode, setDarkMode, sidebarOpen, to
             <div className="absolute bottom-0 left-0 right-0 p-6 space-y-2">
               <button 
                 onClick={toggleDarkMode}
-                className="flex items-center space-x-3 w-full p-3 bg-transparent border-0 rounded-xl transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-900"
+                className={`flex items-center space-x-3 w-full p-3 rounded-xl transition-all duration-200 ${
+                  darkMode ? 'hover:bg-gray-700 text-yellow-400' : 'hover:bg-gray-100 text-gray-800'
+                }`}
                 style={{ backgroundColor: 'transparent' }}
               >
                 {darkMode ? <FaSun className="text-xl text-yellow-400" /> : <FaMoon className="text-xl text-gray-800" />}
@@ -133,7 +139,9 @@ const StudentSidebar = ({ toggleDarkMode, darkMode, setDarkMode, sidebarOpen, to
               </button>
               <button 
                 onClick={handleLogoutClick}
-                className="flex items-center space-x-3 w-full p-3 text-red-700 bg-transparent border-0 rounded-xl transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-900"
+                className={`flex items-center space-x-3 w-full p-3 text-red-600 rounded-xl transition-all duration-200 ${
+                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
                 style={{ backgroundColor: 'transparent' }}
               >
                 <FaSignOutAlt className="text-xl" />

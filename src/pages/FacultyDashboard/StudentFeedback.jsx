@@ -1,21 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import { getDarkModeFromStorage, setDarkModeInStorage } from './darkModeUtils';
 import { collection, getDocs, query, where, orderBy, limit, doc, getDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from "../../firebaseConfig";
 import { useUserSession } from '../../UserSessionContext';
-import { FaStarHalfAlt, FaStar, FaRegStar, FaTimes, FaEdit, FaTrash, FaCheckSquare, FaRegSquare, FaListUl, FaClone } from 'react-icons/fa';
+import { FaStarHalfAlt, FaStar, FaRegStar, FaTimes, FaEdit, FaTrash, FaCheckSquare, FaRegSquare, FaListUl, FaClone, FaExpand, FaChevronLeft, FaChevronRight, FaUser, FaCalendarAlt, FaComments, FaChartBar, FaGraduationCap, FaBuilding } from 'react-icons/fa';
 import LogoutConfirmation from '../../components/LogoutConfirmation';
 import { useNavigate } from 'react-router-dom';
 import DepartmentSelectionModal from '../../components/DepartmentSelectionModal';
+
+const DEPARTMENTS = [
+  'Computer Engineering',
+  'Information Technology',
+  'Artificial Intelligence and Data Science Engineering',
+  'Mechanical Engineering',
+  'Instrumentation and Control Engineering',
+  'Electronics and Telecommunication Engineering',
+  'Civil Engineering',
+  'Electrical Engineering',
+  'Automation and Robotics',
+  'Applied Sciences & Humanities',
+  'Master of Business Administration'
+];
 
 const StudentFeedback = () => {
   const navigate = useNavigate();
   const { user } = useUserSession();
   
-  // IMPORTANT: Move hasEditDeletePermission before any useEffect that uses it
-  const hasEditDeletePermission = user && user.role === 'Faculty';
+  // Faculty & Admin users have edit and delete permissions (students do not)
+  const hasEditDeletePermission = Boolean(user && user.role !== 'Student');
   
   const [darkMode, setDarkMode] = useState(getDarkModeFromStorage());
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -30,10 +44,15 @@ const StudentFeedback = () => {
   const [selectedActivities, setSelectedActivities] = useState(new Set());
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
+  const [editDeptDropdownOpen, setEditDeptDropdownOpen] = useState(false);
+  const editDeptDropdownRef = useRef(null);
+  const [showDeptModal, setShowDeptModal] = useState(false);
   const [editForm, setEditForm] = useState({
     activityName: '',
     description: '',
     courseName: '',
+    department: '',
+    departments: [],
     className: '',
     academicYear: '',
     semester: '',
@@ -50,7 +69,8 @@ const StudentFeedback = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [modalImageUrl, setModalImageUrl] = useState('');
+  const [modalImages, setModalImages] = useState([]);
+  const [activeModalImageIndex, setActiveModalImageIndex] = useState(0);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   const toggleDarkMode = () => {
@@ -85,6 +105,18 @@ const StudentFeedback = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showProfileMenu]);
+
+  useEffect(() => {
+    const handleDeptDropdownOutside = (event) => {
+      if (editDeptDropdownRef.current && !editDeptDropdownRef.current.contains(event.target)) {
+        setEditDeptDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleDeptDropdownOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleDeptDropdownOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -131,14 +163,15 @@ const StudentFeedback = () => {
           const feedbackSnapshot = await getDocs(feedbackQuery);
           const feedbackComments = feedbackSnapshot.docs.map(feedbackDoc => {
             const feedbackData = feedbackDoc.data();
+            const rawRating = Number(feedbackData.rating || feedbackData.overallRating || 0);
             return {
               id: feedbackDoc.id,
               studentName: feedbackData.studentName || 'Anonymous Student', // Ensure fallback
               studentId: feedbackData.studentId,
-              rating: feedbackData.rating,
-              understandability: feedbackData.understandability,
-              engagement: feedbackData.engagement,
-              relevance: feedbackData.relevance,
+              rating: rawRating,
+              understandability: Number(feedbackData.understandability || 0),
+              engagement: Number(feedbackData.engagement || 0),
+              relevance: Number(feedbackData.relevance || 0),
               comment: feedbackData.comment,
               suggestions: feedbackData.suggestions,
               timestamp: feedbackData.timestamp,
@@ -146,23 +179,43 @@ const StudentFeedback = () => {
             };
           });
           
-          const ratings = feedbackComments.map(c => c.rating);
+          const ratings = feedbackComments.map(c => c.rating).filter(r => r > 0);
           const averageRating = ratings.length > 0 ? 
-            ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+            ratings.reduce((a, b) => a + b, 0) / ratings.length : (Number(data.averageRating) || 0);
           
+          // Aggregate all activity images
+          const allImages = [];
+          if (data.mainImage) allImages.push(data.mainImage);
+          if (Array.isArray(data.fileUrls)) {
+            data.fileUrls.forEach(f => {
+              const url = typeof f === 'string' ? f : f?.url;
+              if (url && !allImages.includes(url)) allImages.push(url);
+            });
+          }
+          if (Array.isArray(data.images)) {
+            data.images.forEach(img => {
+              const url = typeof img === 'string' ? img : img?.url;
+              if (url && !allImages.includes(url)) allImages.push(url);
+            });
+          }
+
+          const rawDate = data.activityDate || data.createdAt;
+          const displayDate = formatDateDMY(rawDate);
+
           return {
             id: doc.id,
             ...data,
-            date: data.activityDate ? new Date(data.activityDate).toLocaleDateString() : 
-                 data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : 
-                 'No date',
+            date: displayDate,
             averageRating: averageRating,
             comments: feedbackComments || [],
             totalStudents: data.totalStudents || 0,
             feedbackCount: feedbackComments.length,
             branch: data.className || 'Unknown',
             year: data.academicYear || 'Unknown',
-            image: data.mainImage || (data.fileUrls && data.fileUrls.length > 0 ? data.fileUrls[0].url : 'https://via.placeholder.com/300x200?text=No+Image'),
+            image: data.mainImage || (allImages.length > 0 ? allImages[0] : 'https://placehold.co/600x400/lightgray/white?text=Activity'),
+            images: allImages,
+            mainImage: data.mainImage || null,
+            fileUrls: data.fileUrls || [],
             department: data.department || 'Unknown'
           };
         });
@@ -197,11 +250,13 @@ const StudentFeedback = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-  if (isMultiSelectMode && 
-          !event.target.closest('.activities-container') && 
-          !event.target.closest('button[title*="Delete"]') &&
-          !event.target.closest('.bg-red-600')) {
-                    setIsMultiSelectMode(false);
+      if (
+        isMultiSelectMode && 
+        !event.target.closest('.activities-left-panel') && 
+        !event.target.closest('.delete-confirmation-modal') &&
+        !event.target.closest('button[title*="Delete"]')
+      ) {
+        setIsMultiSelectMode(false);
         setSelectedActivities(new Set());
       }
     };
@@ -225,6 +280,39 @@ const StudentFeedback = () => {
     console.log('Has edit/delete permission:', hasEditDeletePermission);
   }, [user, hasEditDeletePermission]);
 
+  const formatDateDMY = (dateInput) => {
+    if (!dateInput) return 'No date';
+    try {
+      let d;
+      if (dateInput?.toDate) {
+        d = dateInput.toDate();
+      } else if (typeof dateInput === 'string' && dateInput.includes('-')) {
+        // e.g. "2026-09-05" - avoid UTC offset issue by splitting
+        const parts = dateInput.split('T')[0].split('-');
+        if (parts.length === 3) {
+          const year = parts[0];
+          const month = parseInt(parts[1], 10);
+          const day = parseInt(parts[2], 10);
+          return `${day}/${month}/${year}`;
+        }
+        d = new Date(dateInput);
+      } else {
+        d = new Date(dateInput);
+      }
+      if (isNaN(d.getTime())) return String(dateInput);
+      return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+    } catch {
+      return String(dateInput);
+    }
+  };
+
+  const getRatingColor = (rating, hasFeedback) => {
+    if (!hasFeedback || rating === 0) return darkMode ? '#94a3b8' : '#0f172a'; // black / dark for 0 reviews / 0 rating
+    if (rating >= 4.5) return '#10b981'; // 5 stars -> green
+    if (rating >= 3) return '#eab308'; // 3 and 4 stars -> yellow / amber (#eab308)
+    return '#ef4444'; // 1 and 2 stars -> red
+  };
+
   const renderStars = (rating) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
@@ -233,24 +321,24 @@ const StudentFeedback = () => {
     
     for (let i = 0; i < fullStars; i++) {
       stars.push(
-        <FaStar key={`full-${i}`} className="h-5 w-5 text-yellow-500" />
+        <FaStar key={`full-${i}`} className="h-4 w-4" style={{ color: '#fbbf24' }} />
       );
     }
     
     if (hasHalfStar) {
       stars.push(
-        <FaStarHalfAlt key="half" className="h-5 w-5 text-yellow-500" />
+        <FaStarHalfAlt key="half" className="h-4 w-4" style={{ color: '#fbbf24' }} />
       );
     }
     
     const emptyStars = 5 - Math.ceil(rating);
     for (let i = 0; i < emptyStars; i++) {
       stars.push(
-        <FaRegStar key={`empty-${i}`} className="h-5 w-5 text-gray-300" />
+        <FaRegStar key={`empty-${i}`} className="h-4 w-4" style={{ color: '#fde68a' }} />
       );
     }
     
-    return <div className="flex">{stars}</div>;
+    return <div className="flex items-center gap-0.5">{stars}</div>;
   };
 
   const handleViewCompleteFeedback = async (feedbackId) => {
@@ -274,7 +362,11 @@ const StudentFeedback = () => {
     setSelectedFeedback(null);
   };
   
-  const toggleMultiSelectMode = () => {
+  const toggleMultiSelectMode = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setIsMultiSelectMode((prev) => {
       const newMode = !prev;
       console.log('Multi-select mode toggled to:', newMode);
@@ -298,6 +390,23 @@ const StudentFeedback = () => {
       console.log('Total selected activities:', Array.from(newSet));
       console.log('Selected activities size:', newSet.size);
       return newSet;
+    });
+  };
+
+  const handleSelectAll = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (activities.length === 0) return;
+    setSelectedActivities((prev) => {
+      if (prev.size === activities.length) {
+        console.log('Deselecting all activities');
+        return new Set();
+      } else {
+        console.log('Selecting all activities:', activities.length);
+        return new Set(activities.map((a) => a.id));
+      }
     });
   };
 
@@ -473,15 +582,32 @@ setSelectedActivity((prevSelected) => {
 
   const openEditModal = async (activity) => {
     setEditingActivity(activity);
+    
+    let actDepts = [];
+    if (Array.isArray(activity.departments) && activity.departments.length > 0) {
+      actDepts = [...activity.departments];
+    } else if (activity.department) {
+      actDepts = [activity.department];
+    } else if (user?.primaryDepartment) {
+      actDepts = [user.primaryDepartment];
+    } else if (Array.isArray(user?.departments) && user.departments.length > 0) {
+      actDepts = [...user.departments];
+    }
+
+    const primaryDept = actDepts[0] || activity.department || user?.primaryDepartment || (user?.departments && user.departments[0]) || '';
+
     setEditForm({
       activityName: activity.activityName || '',
       description: activity.description || '',
       courseName: activity.courseName || '',
+      department: primaryDept,
+      departments: actDepts,
       className: activity.className || '',
       academicYear: activity.academicYear || '',
       semester: activity.semester || '',
       activityDate: activity.activityDate || ''
     });
+    setEditDeptDropdownOpen(false);
     setShowEditModal(true);
   };
 
@@ -496,32 +622,46 @@ setSelectedActivity((prevSelected) => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
+      const chosenDepartments = Array.isArray(editForm.departments) && editForm.departments.length > 0
+        ? editForm.departments
+        : (editForm.department ? [editForm.department] : []);
+
+      if (chosenDepartments.length === 0) {
+        showToastMessage('Please select at least one department', 'error');
+        return;
+      }
+
+      const primaryDept = chosenDepartments[0] || editForm.department || '';
       const activityRef = doc(db, 'activities', editingActivity.id);
-      await updateDoc(activityRef, {
+      const updateData = {
         ...editForm,
+        department: primaryDept,
+        departments: chosenDepartments,
+        date: formatDateDMY(editForm.activityDate),
         updatedAt: new Date()
-      });
+      };
+      await updateDoc(activityRef, updateData);
 
       setActivities(prevActivities =>
         prevActivities.map(activity =>
           activity.id === editingActivity.id
-            ? { ...activity, ...editForm }
+            ? { ...activity, ...updateData }
             : activity
         )
       );
 
       if (selectedActivity?.id === editingActivity.id) {
-        setSelectedActivity(prev => ({ ...prev, ...editForm }));
+        setSelectedActivity(prev => ({ ...prev, ...updateData }));
       }
 
       setShowEditModal(false);
       setEditingActivity(null);
-             showToastMessage(`Activity updated successfully!`);
+      setEditDeptDropdownOpen(false);
+      showToastMessage(`Activity updated successfully!`);
 
     } catch (error) {
       console.error('Error updating activity:', error);
-                   showToastMessage(`Failed to update activity. Please try again`);
-
+      showToastMessage(`Failed to update activity. Please try again`);
     }
   };
 
@@ -577,20 +717,67 @@ setSelectedActivity((prevSelected) => {
     }
   };
 
-  const openImageModal = (imageUrl) => {
-    console.log("openImageModal called with URL:", imageUrl);
-    setModalImageUrl(imageUrl);
+  const openImageModal = (activityOrImages, initialIndex = 0) => {
+    let imagesList = [];
+    if (Array.isArray(activityOrImages)) {
+      imagesList = activityOrImages;
+    } else if (activityOrImages && typeof activityOrImages === 'object') {
+      if (Array.isArray(activityOrImages.images) && activityOrImages.images.length > 0) {
+        imagesList = activityOrImages.images;
+      } else if (activityOrImages.mainImage) {
+        imagesList = [activityOrImages.mainImage];
+      } else if (activityOrImages.image) {
+        imagesList = [activityOrImages.image];
+      }
+    } else if (typeof activityOrImages === 'string') {
+      imagesList = [activityOrImages];
+    }
+
+    setModalImages(imagesList);
+    setActiveModalImageIndex(initialIndex);
     setIsImageModalOpen(true);
   };
 
+  const handlePrevModalImage = (e) => {
+    if (e) e.stopPropagation();
+    setActiveModalImageIndex(prev => (prev === 0 ? modalImages.length - 1 : prev - 1));
+  };
+
+  const handleNextModalImage = (e) => {
+    if (e) e.stopPropagation();
+    setActiveModalImageIndex(prev => (prev === modalImages.length - 1 ? 0 : prev + 1));
+  };
+
   const closeImageModal = () => {
-    console.log("closeImageModal called");
     setIsImageModalOpen(false);
-    setModalImageUrl('');
+    setModalImages([]);
+    setActiveModalImageIndex(0);
   };
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-800'} transition-colors duration-300`} style={{ minHeight: '109vh' }}>
+    <div className={`min-h-screen transition-colors duration-300 ${
+      darkMode
+        ? 'bg-gray-900 text-gray-100'
+        : 'text-gray-800'
+    }`}
+    style={{
+      backgroundColor: darkMode ? '#111827' : '#f8fafc',
+      backgroundImage: darkMode
+        ? 'radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px)'
+        : 'radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px)',
+      backgroundSize: '24px 24px'
+    }}
+    >
+      {/* Department Selection Modal */}
+      <DepartmentSelectionModal
+        isOpen={showDeptModal}
+        onClose={() => setShowDeptModal(false)}
+        onSubmit={() => setShowDeptModal(false)}
+        userType={user?.role === 'Faculty' ? 'faculty' : 'student'}
+        currentDepartments={user?.departments || []}
+        canEdit={user?.role === 'Faculty' ? true : (user?.departmentChangeCount < 1 || (!user?.departments || user?.departments.length === 0))}
+      />
+
       <Navbar 
         darkMode={darkMode}
         setDarkMode={setDarkMode}
@@ -599,222 +786,381 @@ setSelectedActivity((prevSelected) => {
         toggleProfileMenu={toggleProfileMenu} 
         sidebarOpen={sidebarOpen}
         user={user}
+        onEditDepartment={() => setShowDeptModal(true)}
       />
 
       {/* Department Display */}
       {user?.role === 'Student' && user?.departments && user.departments.length > 0 && (
         <div className="px-6 pt-4 pb-2">
-          <div className="inline-block bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full px-4 py-2 text-sm font-semibold shadow">
+          <div className="inline-block bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200 rounded-full px-4 py-2 text-sm font-semibold shadow-sm border border-sky-200/60">
             Your Department: {user.departments[0]}
           </div>
         </div>
       )}
 
-      <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}>
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm border p-4 h-min sticky top-24 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-            <div className="flex items-center mb-4 w-full">
-              <h2 className="text-xl font-bold flex-shrink-0">Your Activities</h2>
-              <div className="flex items-center gap-2 ml-auto">
-  <button
-    onClick={toggleMultiSelectMode}
-    className={`p-2 rounded-lg border text-sm font-medium transition-colors flex items-center justify-center h-8 w-8 ${
-      isMultiSelectMode
-        ? darkMode
-          ? 'bg-blue-700 border-blue-500 text-white'
-          : 'bg-blue-200 border-blue-500 text-blue-800'
-        : darkMode
-          ? 'bg-gray-700 border-gray-600 text-white'
-          : 'bg-gray-100 border-gray-300 text-blue-800'
-    }`}
-    title="Multi-Select"
-  >
-    <FaClone className="h-4 w-4 mx-auto" />
-  </button>
-  {isMultiSelectMode && selectedActivities.size > 0 && hasEditDeletePermission && (
-    <button
-      onClick={() => {
-        console.log('Multi-delete button clicked');
-        console.log('Selected activities before delete:', Array.from(selectedActivities));
-        handleMultiDelete();
-      }}
-      className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center h-8 w-8"
-      title={`Delete ${selectedActivities.size} Selected`}
-    >
-      <FaTrash size={16} />
-    </button>
-  )}
-</div>
+      <div className={`p-5 lg:p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}>
+        <div className="flex flex-col lg:flex-row items-start gap-5 lg:gap-6">
+          {/* ── Left panel: strictly locked/sticky, internal scroll only ── */}
+          <div className={`activities-left-panel w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-18 z-10 rounded-2xl border flex flex-col overflow-hidden ${
+            darkMode
+              ? 'bg-gray-800 border-gray-700 shadow-lg'
+              : 'bg-white border-slate-200/80 shadow-md'
+          }`} style={{ maxHeight: 'calc(100vh - 3.5rem)', height: 'calc(100vh - 3.5rem)' }}>
+            {/* Panel header — fixed inside panel */}
+            <div className={`px-4 py-4 flex-shrink-0 border-b ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-slate-100 bg-slate-50/80'}`}>
+              <div className="flex items-center gap-2">
+                <div className={`p-2 rounded-xl ${darkMode ? 'bg-sky-900/50 text-sky-300' : 'bg-sky-100 text-sky-600'}`}>
+                  <FaListUl className="h-4 w-4" />
+                </div>
+                <h2 className={`text-base font-bold flex-1 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Your Activities</h2>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={toggleMultiSelectMode}
+                    className={`p-2 rounded-xl border text-sm font-medium transition-all duration-200 flex items-center justify-center h-8 w-8 cursor-pointer shadow-xs ${
+                      isMultiSelectMode
+                        ? 'border-sky-400 text-sky-700 shadow-sm'
+                        : 'border-sky-200 text-sky-600 hover:border-sky-300'
+                    }`}
+                    style={{
+                      backgroundColor: isMultiSelectMode ? '#bae6fd' : '#f0f9ff',
+                      color: '#0284c7',
+                      borderWidth: '1px'
+                    }}
+                    title={isMultiSelectMode ? "Exit Multi-Select" : "Multi-Select"}
+                  >
+                    <FaClone className="h-3.5 w-3.5" style={{ color: '#0284c7' }} />
+                  </button>
+                  {isMultiSelectMode && activities.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleSelectAll}
+                      className="p-2 rounded-xl border text-sm font-medium transition-all duration-200 flex items-center justify-center h-8 w-8 cursor-pointer shadow-xs"
+                      style={{
+                        backgroundColor: selectedActivities.size === activities.length ? '#0284c7' : '#f0f9ff',
+                        color: selectedActivities.size === activities.length ? '#ffffff' : '#0284c7',
+                        borderWidth: '1px',
+                        borderColor: selectedActivities.size === activities.length ? '#0284c7' : '#bae6fd'
+                      }}
+                      title={selectedActivities.size === activities.length ? "Deselect All" : "Select All"}
+                    >
+                      {selectedActivities.size === activities.length ? (
+                        <FaCheckSquare className="h-3.5 w-3.5" style={{ color: '#ffffff' }} />
+                      ) : (
+                        <FaRegSquare className="h-3.5 w-3.5" style={{ color: '#0284c7' }} />
+                      )}
+                    </button>
+                  )}
+                  {isMultiSelectMode && selectedActivities.size > 0 && hasEditDeletePermission && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        if (e) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                        handleMultiDelete();
+                      }}
+                      className="p-2 text-white rounded-xl hover:opacity-90 transition-all duration-200 flex items-center justify-center h-8 w-8 shadow-sm cursor-pointer"
+                      style={{ backgroundColor: '#ef4444', border: 'none', color: '#ffffff' }}
+                      title={`Delete ${selectedActivities.size} Selected`}
+                    >
+                      <FaTrash size={14} style={{ color: '#ffffff' }} />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <p className={`text-xs mt-1.5 ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>
+                {isMultiSelectMode && selectedActivities.size > 0
+                  ? `${selectedActivities.size} of ${activities.length} selected`
+                  : `${activities.length} activit${activities.length === 1 ? 'y' : 'ies'}`}
+              </p>
             </div>
             
+            {/* Scrollable activity list */}
             {loading ? (
-              <div className="flex justify-center py-8">
-                <svg className="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <div className="flex justify-center py-12 flex-1">
+                <svg className="animate-spin h-8 w-8 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               </div>
             ) : activities.length > 0 ? (
-              <div className="space-y-2 activities-container">
-                {activities.map(activity => (
-                  <div 
-                    key={activity.id}
-                    className={`p-3 rounded-lg cursor-pointer transition-colors relative ${
-                      selectedActivity && selectedActivity.id === activity.id 
-                        ? (darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800')
-                        : (darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50')
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div
-                        onClick={() => {
-                          if (!isMultiSelectMode) {
-                            setSelectedActivity(activity);
-                            setIsDescriptionExpanded(false);
-                          }
-                        }}
-                        className="flex-1"
-                      >
-                        <h3 className="font-medium">
-                          <span>{activity.activityName}</span>
+              <div className="activities-container activity-panel-scroll flex-1 px-3 py-3 space-y-2">
+                {activities.map((activity, idx) => {
+                  const isSelected = selectedActivity && selectedActivity.id === activity.id;
+                  return (
+                    <div 
+                      key={activity.id}
+                      style={{
+                        animationDelay: `${idx * 30}ms`,
+                        backgroundColor: isSelected 
+                          ? (darkMode ? 'rgba(14, 165, 233, 0.15)' : '#f0f9ff')
+                          : (darkMode ? 'transparent' : '#ffffff'),
+                        border: isSelected
+                          ? '2px solid #0284c7'
+                          : darkMode ? '1px solid #374151' : '1px solid #e2e8f0',
+                        boxShadow: isSelected
+                          ? '0 2px 8px rgba(2, 132, 199, 0.15)'
+                          : 'none'
+                      }}
+                      className={`p-3 rounded-2xl cursor-pointer transition-all duration-200 relative ${
+                        isSelected
+                          ? darkMode ? 'text-white font-medium' : 'text-slate-900 font-medium'
+                          : darkMode
+                            ? 'hover:bg-sky-950/30 hover:border-sky-700/50'
+                            : 'hover:bg-sky-50/60 hover:border-sky-200 shadow-2xs'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div
+                          onClick={() => {
+                            if (!isMultiSelectMode) {
+                              setSelectedActivity(activity);
+                              setIsDescriptionExpanded(false);
+                            }
+                          }}
+                          className="flex-1 min-w-0"
+                        >
+                          <h3 className={`font-semibold text-sm leading-snug ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                            <span
+                              style={{
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                                wordBreak: 'break-word',
+                              }}
+                              title={activity.activityName}
+                            >
+                              {activity.activityName}
+                            </span>
+                          </h3>
                           {(Array.isArray(activity.departments) && activity.departments.length > 0) ? (
-                            <span className="block text-xs text-gray-500 mt-1">{activity.departments.join(', ')}</span>
+                            <span className={`block text-xs mt-0.5 truncate ${darkMode ? 'text-gray-400' : 'text-sky-600/75'}`}>{activity.departments.join(', ')}</span>
                           ) : (
                             activity.department && (
-                              <span className="block text-xs text-gray-500 mt-1">{activity.department}</span>
+                              <span className={`block text-xs mt-0.5 truncate ${darkMode ? 'text-gray-400' : 'text-sky-600/75'}`}>{activity.department}</span>
                             )
                           )}
-                        </h3>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{activity.date}</span>
-                          <div className="flex items-center gap-1">
-                            <span className={`text-sm font-semibold ${activity.averageRating >= 4 ? 'text-green-500' : activity.averageRating >= 3 ? 'text-yellow-500' : 'text-red-500'}`}>{activity.averageRating.toFixed(1)}</span>
-                            <FaStar className={`h-4 w-4 ${activity.averageRating >= 4 ? 'text-green-500' : activity.averageRating >= 3 ? 'text-yellow-500' : 'text-red-500'}`} />
-                            <span className="text-xs text-gray-500">({activity.feedbackCount})</span>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>{activity.date}</span>
+                            <div className="flex items-center gap-1">
+                              <span
+                                className="text-xs font-bold px-1.5 py-0.5 rounded-md border"
+                                style={{
+                                  color: getRatingColor(activity.averageRating, activity.feedbackCount > 0),
+                                  backgroundColor: `${getRatingColor(activity.averageRating, activity.feedbackCount > 0)}1A`,
+                                  borderColor: `${getRatingColor(activity.averageRating, activity.feedbackCount > 0)}40`
+                                }}
+                              >
+                                {activity.feedbackCount > 0 ? activity.averageRating.toFixed(1) : '0.0'}
+                              </span>
+                              <FaStar
+                                className="h-3 w-3"
+                                style={{ color: getRatingColor(activity.averageRating, activity.feedbackCount > 0) }}
+                              />
+                              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'}`}>({activity.feedbackCount})</span>
+                            </div>
                           </div>
                         </div>
+                        {isMultiSelectMode && (
+                          <span
+                            className="ml-1 cursor-pointer flex-shrink-0"
+                            onClick={e => {
+                              e.stopPropagation();
+                              toggleActivitySelection(activity.id);
+                            }}
+                          >
+                            {selectedActivities.has(activity.id) ? (
+                              <FaCheckSquare className="h-4 w-4 text-sky-500" />
+                            ) : (
+                              <FaRegSquare className="h-4 w-4 text-gray-400" />
+                            )}
+                          </span>
+                        )}
                       </div>
-                      {isMultiSelectMode && (
-                        <span
-                          className="ml-2 cursor-pointer"
-                          onClick={e => {
-                            e.stopPropagation();
-                            toggleActivitySelection(activity.id);
-                          }}
-                        >
-                          {selectedActivities.has(activity.id) ? (
-                            <FaCheckSquare className="h-5 w-5 text-blue-500" />
-                          ) : (
-                            <FaRegSquare className="h-5 w-5 text-gray-400" />
-                          )}
-                        </span>
+                      {isSelected && (
+                        <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-sky-500" />
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No activities found</p>
+              <div className="text-center py-12 flex-1 flex flex-col items-center justify-center px-4">
+                <FaListUl className={`h-10 w-10 mb-3 ${darkMode ? 'text-gray-600' : 'text-sky-200'}`} />
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No activities found</p>
               </div>
             )}
           </div>
           
           {selectedActivity ? (
-            <div className="flex-1">
-              <div className={`rounded-xl shadow-sm overflow-hidden border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} relative`}>
-                {hasEditDeletePermission && !isMultiSelectMode && (
-                  <div className="absolute top-4 right-4 flex gap-2 z-10">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditModal(selectedActivity);
-                      }}
-                      className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <FaEdit size={16} />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteActivity(selectedActivity.id);
-                      }}
-                      className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      <FaTrash size={16} />
-                    </button>
-                  </div>
-                )}
+            <div className="flex-1 min-w-0 animate-fade-in-up" key={selectedActivity.id}>
+              <div
+                className={`rounded-2xl shadow-lg overflow-hidden border flex flex-col ${
+                  darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 shadow-sm'
+                }`}
+                style={{ maxHeight: 'calc(100vh - 3.5rem)', height: 'calc(100vh - 3.5rem)' }}
+              >
+                {/* Hero header — fixed/locked at top */}
+                <div className={`px-6 pt-5 pb-5 border-b relative flex-shrink-0 z-10 ${darkMode ? 'border-gray-700/80 bg-gray-800' : 'border-slate-100 bg-slate-50/90 backdrop-blur-xs'}`}>
+                  {hasEditDeletePermission && !isMultiSelectMode && (
+                    <div className="absolute top-4 right-4 flex gap-2 z-20">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(selectedActivity);
+                        }}
+                        className="p-2.5 rounded-xl transition-all duration-200 shadow-md flex items-center justify-center cursor-pointer hover:brightness-110 active:scale-95"
+                        style={{
+                          backgroundColor: '#0369a1',
+                          color: '#ffffff',
+                          border: '1px solid #0284c7'
+                        }}
+                        title="Edit Activity"
+                      >
+                        <FaEdit size={15} style={{ color: '#ffffff' }} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteActivity(selectedActivity.id);
+                        }}
+                        className="p-2.5 rounded-xl transition-all duration-200 shadow-md flex items-center justify-center cursor-pointer hover:brightness-110 active:scale-95"
+                        style={{
+                          backgroundColor: '#b91c1c',
+                          color: '#ffffff',
+                          border: '1px solid #dc2626'
+                        }}
+                        title="Delete Activity"
+                      >
+                        <FaTrash size={15} style={{ color: '#ffffff' }} />
+                      </button>
+                    </div>
+                  )}
 
-                <div className="h-64 relative">
-                  <img
-                    src={selectedActivity.image}
-                    alt={selectedActivity.activityName}
-                    className="w-full h-full object-cover rounded-t-lg cursor-pointer"
-                    onClick={() => openImageModal(selectedActivity.image)}
-                    onError={(e) => {
-                      e.target.onerror = null; 
-                      e.target.src='https://placehold.co/600x400/lightgray/white?text=Activity';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end">
-                    <div className="p-6 text-white">
-                      <h2 className="text-3xl font-bold">{selectedActivity.activityName}</h2>
-                      <div className="flex justify-between items-center mt-2">
-                        <div className="flex space-x-2">
-                          <span className="px-3 py-1 bg-blue-600 rounded-full text-sm">
-                            {selectedActivity.branch}
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-5">
+                    <div className="flex-1 pr-16">
+                      <h2
+                        className={`text-xl sm:text-2xl font-bold leading-snug tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}
+                        style={{ wordBreak: 'break-word' }}
+                        title={selectedActivity.activityName}
+                      >
+                        {selectedActivity.activityName}
+                      </h2>
+
+                      <div className="flex flex-wrap items-center gap-2 mt-3">
+                        {selectedActivity.facultyName && (
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                            darkMode ? 'bg-sky-950/50 text-sky-200 border-sky-500/80' : 'bg-sky-50 text-sky-800 border-sky-400 shadow-2xs'
+                          }`}>
+                            <FaUser className="text-sky-500 text-xs" />
+                            <span>{selectedActivity.facultyName}</span>
                           </span>
-                          <span className="px-3 py-1 bg-green-600 rounded-full text-sm">
-                            {selectedActivity.year}
+                        )}
+                        {selectedActivity.date && (
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                            darkMode ? 'bg-amber-950/50 text-amber-200 border-amber-500/80' : 'bg-amber-50 text-amber-800 border-amber-400 shadow-2xs'
+                          }`}>
+                            <FaCalendarAlt className="text-amber-500 text-xs" />
+                            <span>{selectedActivity.date}</span>
                           </span>
+                        )}
+                        {(selectedActivity.courseName || selectedActivity.branch) && (
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                            darkMode ? 'bg-violet-950/50 text-violet-200 border-violet-500/80' : 'bg-violet-50 text-violet-800 border-violet-400 shadow-2xs'
+                          }`}>
+                            <FaGraduationCap className="text-violet-500 text-xs" />
+                            <span>{selectedActivity.courseName || selectedActivity.branch}</span>
+                          </span>
+                        )}
+                        {(selectedActivity.className || selectedActivity.year) && (
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                            darkMode ? 'bg-emerald-950/50 text-emerald-200 border-emerald-500/80' : 'bg-emerald-50 text-emerald-800 border-emerald-400 shadow-2xs'
+                          }`}>
+                            <span>{selectedActivity.className || selectedActivity.year}</span>
+                          </span>
+                        )}
+                        {(selectedActivity.departments?.length > 0 || selectedActivity.department) && (
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                            darkMode ? 'bg-indigo-950/50 text-indigo-200 border-indigo-500/80' : 'bg-indigo-50 text-indigo-800 border-indigo-400 shadow-2xs'
+                          }`}>
+                            <FaBuilding className="text-indigo-500 text-xs" />
+                            <span>{Array.isArray(selectedActivity.departments) ? selectedActivity.departments.join(', ') : selectedActivity.department}</span>
+                          </span>
+                        )}
+                        {selectedActivity.academicYear && (
+                          <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                            darkMode ? 'bg-rose-950/50 text-rose-200 border-rose-500/80' : 'bg-rose-50 text-rose-800 border-rose-400 shadow-2xs'
+                          }`}>
+                            <span>{selectedActivity.academicYear} {selectedActivity.semester ? `(Sem ${selectedActivity.semester})` : ''}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 mt-3">
+                        <div className="flex items-center gap-0.5">
+                          {renderStars(selectedActivity.averageRating)}
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="flex">
-                            {renderStars(selectedActivity.averageRating)}
-                          </div>
-                          <span className="text-white font-bold">
-                            {selectedActivity.averageRating.toFixed(1)}
-                          </span>
-                          <span className="text-white text-sm">
-                            ({selectedActivity.feedbackCount} reviews)
-                          </span>
-                        </div>
+                        <span
+                          className="text-sm font-bold"
+                          style={{ color: getRatingColor(selectedActivity.averageRating, selectedActivity.feedbackCount > 0) }}
+                        >
+                          {selectedActivity.averageRating.toFixed(1)}
+                        </span>
+                        <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>
+                          ({selectedActivity.feedbackCount} reviews)
+                        </span>
                       </div>
                     </div>
+
+                    {selectedActivity.image && (
+                      <div className="flex-shrink-0 flex flex-col items-center justify-center md:justify-end">
+                        <div
+                          className="relative group cursor-pointer select-none p-2"
+                          onClick={() => openImageModal(selectedActivity)}
+                          title="Click to view photo"
+                        >
+                          <div className="absolute inset-2 rounded-2xl bg-sky-200/60 dark:bg-sky-800/40 transform rotate-6 scale-95 opacity-70 group-hover:rotate-12 transition-transform duration-300"></div>
+                          <div className="absolute inset-2 rounded-2xl bg-sky-100/80 dark:bg-sky-700/40 transform -rotate-3 scale-95 opacity-80 group-hover:-rotate-6 transition-transform duration-300"></div>
+                          <div className="relative w-44 h-32 sm:w-52 sm:h-36 rounded-2xl overflow-hidden shadow-md border-2 border-white dark:border-gray-700 bg-gray-100 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
+                            <img
+                              src={selectedActivity.image}
+                              alt={selectedActivity.activityName}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://placehold.co/600x400/lightgray/white?text=Activity';
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-sky-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold backdrop-blur-xs gap-1">
+                              <FaExpand className="text-xs" />
+                              <span>View</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-                
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div>
-                      <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Faculty</h3>
-                      <p className="text-lg">{selectedActivity.facultyName}</p>
-                    </div>
-                    <div>
-                      <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Course</h3>
-                      <p className="text-lg">{selectedActivity.courseName}</p>
-                    </div>
-                    <div>
-                      <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Class</h3>
-                      <p className="text-lg">{selectedActivity.className}</p>
-                    </div>
-                    <div>
-                      <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Academic Year</h3>
-                      <p className="text-lg">{selectedActivity.academicYear} (Sem {selectedActivity.semester})</p>
-                    </div>
-                    <div>
-                      <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Date</h3>
-                      <p className="text-lg">{selectedActivity.date}</p>
-                    </div>
-                    <div>
-                      <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Departments</h3>
-                      <p className="text-lg">{Array.isArray(selectedActivity.departments) ? selectedActivity.departments.join(', ') : selectedActivity.department || '-'}</p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Description</h3>
-                      <div className="mt-1">
-                        <p className="whitespace-pre-wrap">
+
+                {/* Scrollable details: Description, Feedback Summary, Student Comments */}
+                <div
+                  className="p-6 flex-1 overflow-y-auto"
+                  style={{
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: darkMode ? '#4B5563 transparent' : '#CBD5E1 transparent'
+                  }}
+                >
+                  {/* Description */}
+                  <div className="mb-6">
+                    <div className={`p-4 rounded-xl border ${darkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-white border-sky-100'}`}>
+                      <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? 'text-sky-300' : 'text-sky-600'}`}>Description</h3>
+                      <div>
+                        <p className={`whitespace-pre-wrap text-sm leading-relaxed ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                           {isDescriptionExpanded || (selectedActivity.description || '').length <= 250
                             ? selectedActivity.description
                             : `${(selectedActivity.description || '').substring(0, 250)}...`}
@@ -822,46 +1168,63 @@ setSelectedActivity((prevSelected) => {
                         {(selectedActivity.description || '').length > 250 && (
                           <button
                             onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                            className="text-blue-500 hover:underline mt-1 text-sm bg-transparent border-none p-0"
+                            className="text-sky-500 hover:text-sky-600 hover:underline mt-1 text-sm bg-transparent border-none p-0 cursor-pointer"
                           >
-                            {isDescriptionExpanded ? 'Show less' : 'more...'}
+                            {isDescriptionExpanded ? 'Show less' : 'Read more...'}
                           </button>
                         )}
                       </div>
                     </div>
                   </div>
                   
-                  <div className="mb-6">
-                    <h3 className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Student Feedback Summary</h3>
-                    <div className="flex items-center justify-between">
+                  {/* Rating summary card */}
+                  <div className={`mb-6 p-5 rounded-2xl border ${
+                    darkMode ? 'bg-gray-750 border-gray-700' : 'bg-gradient-to-br from-sky-50/80 to-white border-sky-100'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <FaChartBar className={`h-4 w-4 ${darkMode ? 'text-sky-400' : 'text-sky-500'}`} />
+                      <h3 className={`font-semibold ${darkMode ? 'text-gray-200' : 'text-sky-900'}`}>Student Feedback Summary</h3>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                       <div>
                         <div className="flex items-end gap-2">
-                          <span className="text-4xl font-bold">{selectedActivity.averageRating.toFixed(1)}</span>
-                          <span className="text-sm mb-1">out of 5</span>
+                          <span
+                            className="text-5xl font-bold"
+                            style={{ color: getRatingColor(selectedActivity.averageRating, selectedActivity.feedbackCount > 0) }}
+                          >
+                            {selectedActivity.averageRating.toFixed(1)}
+                          </span>
+                          <span className={`text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>out of 5</span>
                         </div>
-                        <div className="flex mt-1">
-                          {renderStars(selectedActivity.averageRating)}
-                        </div>
-                        <p className="text-sm mt-1">{selectedActivity.feedbackCount} student reviews</p>
+                        <div className="flex mt-1">{renderStars(selectedActivity.averageRating)}</div>
+                        <p className={`text-sm mt-2 ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>
+                          {selectedActivity.feedbackCount} student review{selectedActivity.feedbackCount !== 1 ? 's' : ''}
+                        </p>
                       </div>
                       
-                      <div className="w-48">
+                      <div className="w-full sm:w-64">
                         {[5, 4, 3, 2, 1].map(rating => {
-                          const count = selectedActivity.comments.filter(c => Math.floor(c.rating) === rating).length;
-                          const percentage = selectedActivity.feedbackCount > 0 ? 
-                            (count / selectedActivity.feedbackCount) * 100 : 0;
+                          const count = (selectedActivity.comments || []).filter(c => {
+                            const r = Math.round(Number(c.rating || 0));
+                            return r === rating;
+                          }).length;
+                          const total = selectedActivity.feedbackCount || (selectedActivity.comments ? selectedActivity.comments.length : 0);
+                          const percentage = total > 0 ? (count / total) * 100 : 0;
                           
                           return (
-                            <div key={rating} className="flex items-center mt-1">
-                              <span className="text-sm w-3">{rating}</span>
-                              <FaStar className="h-4 w-4 text-yellow-500 mx-1" />
-                              <div className="flex-1 h-2 bg-gray-300 rounded-full overflow-hidden">
+                            <div key={rating} className="flex items-center mt-2 gap-2">
+                              <span className={`text-xs w-3 font-semibold ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>{rating}</span>
+                              <FaStar className="h-3 w-3 flex-shrink-0" style={{ color: '#fbbf24' }} />
+                              <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${darkMode ? 'bg-gray-700' : 'bg-slate-200/80'}`}>
                                 <div 
-                                  className="h-full bg-yellow-500" 
-                                  style={{ width: `${percentage}%` }}
+                                  className="h-full rounded-full transition-all duration-500" 
+                                  style={{
+                                    width: `${percentage}%`,
+                                    backgroundColor: percentage > 0 ? '#eab308' : 'transparent'
+                                  }}
                                 ></div>
                               </div>
-                              <span className="text-sm ml-2 w-8">{count}</span>
+                              <span className={`text-xs ml-1 w-6 text-right font-medium ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>{count}</span>
                             </div>
                           );
                         })}
@@ -869,18 +1232,29 @@ setSelectedActivity((prevSelected) => {
                     </div>
                   </div>
                   
+                  {/* Student comments */}
                   <div>
-                    <h3 className="font-bold text-xl mb-4">Student Comments</h3>
+                    <div className="flex items-center gap-2 mb-4">
+                      <FaComments className={`h-4 w-4 ${darkMode ? 'text-sky-400' : 'text-sky-500'}`} />
+                      <h3 className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-sky-900'}`}>Student Comments</h3>
+                    </div>
                     {selectedActivity.comments && selectedActivity.comments.length > 0 ? (
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         {selectedActivity.comments.map((comment, index) => (
-                          <div key={comment.id || index} className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h4 className="font-medium">{comment.studentName || 'Anonymous Student'}</h4>
-                                <div className="flex mt-1">{renderStars(comment.rating)}</div>
+                          <div
+                            key={comment.id || index}
+                            className={`px-4 py-3.5 rounded-xl border transition-all duration-200 hover:shadow-md ${
+                              darkMode
+                                ? 'bg-gray-750 border-gray-700 hover:border-gray-600'
+                                : 'bg-white border-sky-100 hover:border-sky-200 hover:shadow-sky-100/50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex flex-wrap items-center gap-2.5">
+                                <h4 className="font-semibold text-sm leading-none">{comment.studentName || 'Anonymous Student'}</h4>
+                                <div className="flex items-center">{renderStars(comment.rating)}</div>
                               </div>
-                              <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              <span className={`text-xs flex-shrink-0 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                                 {comment.createdAt
                                   ? (() => {
                                       if (comment.createdAt.toDate) {
@@ -900,16 +1274,20 @@ setSelectedActivity((prevSelected) => {
                                 }
                               </span>
                             </div>
-                            <p className="mt-2">{comment.comment || 'No comment provided'}</p>
-                            
-                            <div className="mt-4 flex justify-end">
+
+                            <div className="flex items-center justify-between gap-4 mt-2.5">
+                              <p className={`text-sm leading-relaxed flex-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                {comment.comment || 'No comment provided'}
+                              </p>
                               <button
+                                type="button"
                                 onClick={() => handleViewCompleteFeedback(comment.id)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                                  darkMode 
-                                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                                    : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
-                                }`}
+                                style={{
+                                  backgroundColor: '#0369a1',
+                                  color: '#ffffff',
+                                  border: '1px solid #0284c7'
+                                }}
+                                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 shadow-xs hover:brightness-110 active:scale-95 cursor-pointer whitespace-nowrap flex-shrink-0"
                               >
                                 View Complete Feedback
                               </button>
@@ -918,8 +1296,11 @@ setSelectedActivity((prevSelected) => {
                         ))}
                       </div>
                     ) : (
-                      <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                        <p>No comments available for this activity.</p>
+                      <div className={`p-8 rounded-xl border text-center ${
+                        darkMode ? 'bg-gray-750 border-gray-700 text-gray-400' : 'bg-sky-50/50 border-sky-100 text-gray-500'
+                      }`}>
+                        <FaComments className={`h-8 w-8 mx-auto mb-2 ${darkMode ? 'text-gray-600' : 'text-sky-200'}`} />
+                        <p className="text-sm">No comments available for this activity yet.</p>
                       </div>
                     )}
                   </div>
@@ -927,13 +1308,17 @@ setSelectedActivity((prevSelected) => {
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center h-96">
-              <div className="text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-16 w-16 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h2 className="text-xl font-medium">Select an activity to view feedback</h2>
-                <p className={`mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <div className="flex-1 flex items-center justify-center min-h-[28rem] animate-scale-in">
+              <div className={`text-center p-10 rounded-2xl border ${
+                darkMode ? 'border-gray-700 bg-gray-800/50' : 'border-sky-100 bg-white/80 shadow-sm'
+              }`}>
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
+                  darkMode ? 'bg-sky-900/30' : 'bg-sky-100'
+                }`}>
+                  <FaComments className={`h-8 w-8 ${darkMode ? 'text-sky-400' : 'text-sky-400'}`} />
+                </div>
+                <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-sky-900'}`}>Select an activity to view feedback</h2>
+                <p className={`mt-2 text-sm max-w-xs mx-auto ${darkMode ? 'text-gray-400' : 'text-sky-600/70'}`}>
                   Choose an activity from the list to see student comments and ratings
                 </p>
               </div>
@@ -943,14 +1328,33 @@ setSelectedActivity((prevSelected) => {
       </div>
       
       {showCompleteFeedback && selectedFeedback && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
-          <div className={`rounded-lg shadow-lg max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4"
+          onClick={closeCompleteFeedback}
+        >
+          <div
+            className={`rounded-2xl shadow-2xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto animate-scale-in border ${
+              darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-gray-800 border-slate-200'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-start mb-4">
-              <h2 className="text-2xl font-bold">Complete Feedback Details</h2>
+              <div>
+                <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-sky-900'}`}>Complete Feedback Details</h2>
+                <p className={`text-sm mt-0.5 ${darkMode ? 'text-gray-400' : 'text-sky-600/70'}`}>Full student review breakdown</p>
+              </div>
               <button 
+                type="button"
                 onClick={closeCompleteFeedback}
-                className="p-2 rounded-full bg-transparent hover:bg-gray-200 dark:hover:bg-gray-700">
-                <FaTimes className="h-5 w-5" />
+                style={{
+                  backgroundColor: darkMode ? '#1e293b' : '#f8fafc',
+                  color: darkMode ? '#94a3b8' : '#64748b',
+                  border: darkMode ? '1px solid #334155' : '1px solid #e2e8f0'
+                }}
+                className="p-2 rounded-xl transition-all duration-200 hover:brightness-105 active:scale-95 cursor-pointer"
+                title="Close"
+              >
+                <FaTimes className="h-4 w-4" />
               </button>
             </div>
             
@@ -996,33 +1400,33 @@ setSelectedActivity((prevSelected) => {
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                    <h4 className="font-medium mb-2">Overall Rating</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`p-4 rounded-xl border ${darkMode ? 'bg-gray-750 border-gray-700' : 'bg-sky-50/60 border-sky-100'}`}>
+                    <h4 className={`font-medium mb-2 text-sm ${darkMode ? 'text-gray-300' : 'text-sky-700'}`}>Overall Rating</h4>
                     <div className="flex items-center">
                       {renderStars(selectedFeedback.rating)}
                       <span className="ml-2 font-bold">{selectedFeedback.rating}</span>
                     </div>
                   </div>
                   
-                  <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                    <h4 className="font-medium mb-2">Understandability</h4>
+                  <div className={`p-4 rounded-xl border ${darkMode ? 'bg-gray-750 border-gray-700' : 'bg-sky-50/60 border-sky-100'}`}>
+                    <h4 className={`font-medium mb-2 text-sm ${darkMode ? 'text-gray-300' : 'text-sky-700'}`}>Understandability</h4>
                     <div className="flex items-center">
                       {renderStars(selectedFeedback.understandability)}
                       <span className="ml-2 font-bold">{selectedFeedback.understandability}</span>
                     </div>
                   </div>
                   
-                  <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                    <h4 className="font-medium mb-2">Engagement</h4>
+                  <div className={`p-4 rounded-xl border ${darkMode ? 'bg-gray-750 border-gray-700' : 'bg-sky-50/60 border-sky-100'}`}>
+                    <h4 className={`font-medium mb-2 text-sm ${darkMode ? 'text-gray-300' : 'text-sky-700'}`}>Engagement</h4>
                     <div className="flex items-center">
                       {renderStars(selectedFeedback.engagement)}
                       <span className="ml-2 font-bold">{selectedFeedback.engagement}</span>
                     </div>
                   </div>
                   
-                  <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                    <h4 className="font-medium mb-2">Relevance</h4>
+                  <div className={`p-4 rounded-xl border ${darkMode ? 'bg-gray-750 border-gray-700' : 'bg-sky-50/60 border-sky-100'}`}>
+                    <h4 className={`font-medium mb-2 text-sm ${darkMode ? 'text-gray-300' : 'text-sky-700'}`}>Relevance</h4>
                     <div className="flex items-center">
                       {renderStars(selectedFeedback.relevance)}
                       <span className="ml-2 font-bold">{selectedFeedback.relevance}</span>
@@ -1030,26 +1434,28 @@ setSelectedActivity((prevSelected) => {
                   </div>
                 </div>
                 
-                <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                  <h4 className="font-medium mb-2">Student Comments</h4>
-                  <p>{selectedFeedback.comment || 'No comments provided'}</p>
+                <div className={`p-4 rounded-xl border ${darkMode ? 'bg-gray-750 border-gray-700' : 'bg-white border-sky-100'}`}>
+                  <h4 className={`font-medium mb-2 text-sm ${darkMode ? 'text-gray-300' : 'text-sky-700'}`}>Student Comments</h4>
+                  <p className="text-sm leading-relaxed">{selectedFeedback.comment || 'No comments provided'}</p>
                 </div>
                 
-                <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                  <h4 className="font-medium mb-2">Suggestions for Improvement</h4>
-                  <p>{selectedFeedback.suggestions || 'No suggestions provided'}</p>
+                <div className={`p-4 rounded-xl border ${darkMode ? 'bg-gray-750 border-gray-700' : 'bg-white border-sky-100'}`}>
+                  <h4 className={`font-medium mb-2 text-sm ${darkMode ? 'text-gray-300' : 'text-sky-700'}`}>Suggestions for Improvement</h4>
+                  <p className="text-sm leading-relaxed">{selectedFeedback.suggestions || 'No suggestions provided'}</p>
                 </div>
               </div>
             )}
             
             <div className="mt-6 flex justify-end">
               <button
+                type="button"
                 onClick={closeCompleteFeedback}
-                className={`px-6 py-2 rounded-lg font-medium ${
-                  darkMode 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
+                style={{
+                  backgroundColor: '#0284c7',
+                  color: '#ffffff',
+                  backgroundImage: 'linear-gradient(to right, #0284c7, #2563eb)'
+                }}
+                className="px-6 py-2.5 rounded-xl font-semibold text-white shadow-md shadow-sky-500/20 hover:brightness-110 active:brightness-95 transition-all cursor-pointer border-none"
               >
                 Close
               </button>
@@ -1070,154 +1476,345 @@ setSelectedActivity((prevSelected) => {
           </div>
         </div>)}
       {showEditModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} rounded-lg shadow-xl w-full max-w-2xl mx-4 flex flex-col`} style={{ maxHeight: '90vh' }}>
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4"
+          onClick={() => {
+            setShowEditModal(false);
+            setEditingActivity(null);
+          }}
+        >
+          <div
+            className={`${darkMode ? 'bg-gray-800 text-white border border-gray-700' : 'bg-white text-slate-800 border border-slate-200'} rounded-2xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col overflow-hidden`}
+            style={{ maxHeight: '92vh', height: '90vh' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Fixed Header */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Edit Activity</h2>
-                <button
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setEditingActivity(null);
-                  }}
-                  className={`p-2 rounded-full border-2 transition-colors bg-transparent ${
-                    darkMode
-                      ? 'border-blue-600 hover:bg-blue-700/20 text-white'
-                      : 'border-blue-600 hover:bg-blue-50 text-blue-600'
-                  }`}
-                >
-                  <FaTimes size={20} className={darkMode ? 'text-white' : 'text-blue-600'} />
-                </button>
+            <div className={`px-6 py-4 border-b flex-shrink-0 flex justify-between items-center ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-slate-100 bg-white'}`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${darkMode ? 'bg-sky-900/50 text-sky-300' : 'bg-sky-100 text-sky-600'}`}>
+                  <FaEdit className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Edit Activity</h2>
+                  
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingActivity(null);
+                }}
+                style={{
+                  backgroundColor: darkMode ? '#1e293b' : '#f8fafc',
+                  color: darkMode ? '#94a3b8' : '#64748b',
+                  border: darkMode ? '1px solid #334155' : '1px solid #e2e8f0'
+                }}
+                className="p-2 rounded-xl transition-all hover:brightness-105 active:scale-95 cursor-pointer"
+                title="Close"
+              >
+                <FaTimes size={16} />
+              </button>
             </div>
 
             {/* Scrollable Form Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-4" style={{ 
+            <div className={`flex-1 overflow-y-auto px-6 py-5 space-y-4 ${darkMode ? 'bg-gray-850' : 'bg-slate-50/60'}`} style={{ 
               scrollbarWidth: 'thin',
-              scrollbarColor: darkMode ? '#4B5563 transparent' : '#E5E7EB transparent'
+              scrollbarColor: darkMode ? '#4B5563 transparent' : '#CBD5E1 transparent'
             }}>
-              <form id="editForm" className="space-y-4">
-                <div>
-                  <label className="block mb-1 font-medium">Activity Name</label>
-                  <input
-                    type="text"
-                    name="activityName"
-                    value={editForm.activityName}
-                    onChange={handleEditFormChange}
-                    className={`w-full p-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
-                    required
-                  />
+              <form id="editForm" onSubmit={handleEditSubmit} className="space-y-4">
+
+                {/* Section: Basic details */}
+                <div className={`rounded-2xl border p-4 shadow-2xs ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label className={`block mb-1.5 text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-slate-700'}`}>Activity Name</label>
+                      <input
+                        type="text"
+                        name="activityName"
+                        value={editForm.activityName}
+                        onChange={handleEditFormChange}
+                        style={{
+                          backgroundColor: darkMode ? '#374151' : '#ffffff',
+                          color: darkMode ? '#ffffff' : '#0f172a'
+                        }}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-400 shadow-2xs ${
+                          darkMode ? 'border-gray-600 placeholder-gray-400' : 'border-slate-300 placeholder-slate-400'
+                        }`}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className={`block mb-1.5 text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-slate-700'}`}>Description</label>
+                      <textarea
+                        name="description"
+                        value={editForm.description}
+                        onChange={(e) => {
+                          handleEditFormChange(e);
+                          const textarea = e.target;
+                          textarea.style.height = 'auto';
+                          const newHeight = Math.min(Math.max(textarea.scrollHeight, 80), 200);
+                          textarea.style.height = `${newHeight}px`;
+                          textarea.style.overflowY = textarea.scrollHeight > 200 ? 'auto' : 'hidden';
+                        }}
+                        placeholder="Describe the activity, its objectives and outcomes..."
+                        style={{
+                          minHeight: '80px',
+                          maxHeight: '200px',
+                          overflowY: 'hidden',
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: darkMode ? '#4b5563 #1f2937' : '#cbd5e1 #ffffff',
+                          backgroundColor: darkMode ? '#374151' : '#ffffff',
+                          color: darkMode ? '#ffffff' : '#0f172a'
+                        }}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-400 shadow-2xs resize-none custom-light-scrollbar ${
+                          darkMode ? 'border-gray-600 placeholder-gray-400' : 'border-slate-300 placeholder-slate-400'
+                        }`}
+                        rows="3"
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block mb-1 font-medium">Description</label>
-                  <textarea
-                    name="description"
-                    value={editForm.description}
-                    onChange={handleEditFormChange}
-                    className={`w-full p-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
-                    rows="4"
-                    required
-                  />
+                {/* Section: Classification */}
+                <div className={`rounded-2xl border p-4 shadow-2xs ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div ref={editDeptDropdownRef} className="relative">
+                      <label className={`block mb-1.5 text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-slate-700'}`}>
+                        Departments
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setEditDeptDropdownOpen(prev => !prev)}
+                        style={{
+                          backgroundColor: darkMode ? '#374151' : '#ffffff',
+                          color: darkMode ? '#ffffff' : '#0f172a'
+                        }}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-left flex justify-between items-center transition-colors focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-400 shadow-2xs cursor-pointer ${
+                          darkMode ? 'border-gray-600' : 'border-slate-300'
+                        }`}
+                      >
+                        <span className="truncate flex-1 pr-2">
+                          {editForm.departments && editForm.departments.length > 0
+                            ? editForm.departments.join(', ')
+                            : (editForm.department || 'Select department(s)')}
+                        </span>
+                        <span className="text-gray-400 text-xs flex-shrink-0">▼</span>
+                      </button>
+
+                      {editDeptDropdownOpen && (
+                        <div
+                          className={`absolute z-30 mt-1.5 w-full rounded-xl shadow-xl border max-h-56 overflow-y-auto p-1.5 custom-light-scrollbar ${
+                            darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-slate-200'
+                          }`}
+                        >
+                          {(() => {
+                            const list = [];
+                            if (Array.isArray(user?.departments) && user.departments.length > 0) {
+                              user.departments.forEach(d => { if (d && !list.includes(d)) list.push(d); });
+                            }
+                            if (Array.isArray(editForm.departments)) {
+                              editForm.departments.forEach(d => { if (d && !list.includes(d)) list.push(d); });
+                            }
+                            const deptsToShow = list.length > 0 ? list : DEPARTMENTS;
+
+                            return deptsToShow.map(dept => {
+                              const isChecked = editForm.departments?.includes(dept);
+                              return (
+                                <label
+                                  key={dept}
+                                  className={`flex items-center px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors ${
+                                    darkMode ? 'hover:bg-gray-700' : 'hover:bg-sky-50'
+                                  }`}
+                                >
+                                  <div className={`w-4 h-4 rounded border flex items-center justify-center mr-2.5 transition-colors flex-shrink-0 ${
+                                    isChecked
+                                      ? 'bg-sky-600 border-sky-600 text-white'
+                                      : darkMode
+                                        ? 'bg-gray-700 border-gray-500'
+                                        : 'bg-white border-slate-300'
+                                  }`}>
+                                    {isChecked && (
+                                      <svg className="w-3 h-3 text-white fill-current" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked || false}
+                                    onChange={e => {
+                                      const checked = e.target.checked;
+                                      setEditForm(prev => {
+                                        let nd = prev.departments ? [...prev.departments] : [];
+                                        if (checked) {
+                                          if (!nd.includes(dept)) nd.push(dept);
+                                        } else {
+                                          nd = nd.filter(d => d !== dept);
+                                        }
+                                        return {
+                                          ...prev,
+                                          departments: nd,
+                                          department: nd.length > 0 ? nd[0] : ''
+                                        };
+                                      });
+                                    }}
+                                    className="sr-only"
+                                  />
+                                  <span className={`text-sm truncate ${darkMode ? 'text-gray-200' : 'text-slate-800'}`}>
+                                    {dept}
+                                  </span>
+                                </label>
+                              );
+                            });
+                          })()}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className={`block mb-1.5 text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-slate-700'}`}>Course Name</label>
+                      <input
+                        type="text"
+                        name="courseName"
+                        value={editForm.courseName}
+                        onChange={handleEditFormChange}
+                        style={{
+                          backgroundColor: darkMode ? '#374151' : '#ffffff',
+                          color: darkMode ? '#ffffff' : '#0f172a'
+                        }}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-400 shadow-2xs ${
+                          darkMode ? 'border-gray-600 placeholder-gray-400' : 'border-slate-300 placeholder-slate-400'
+                        }`}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className={`block mb-1.5 text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-slate-700'}`}>Class</label>
+                      <select
+                        name="className"
+                        value={editForm.className}
+                        onChange={handleEditFormChange}
+                        style={{
+                          backgroundColor: darkMode ? '#374151' : '#ffffff',
+                          color: darkMode ? '#ffffff' : '#0f172a'
+                        }}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-400 shadow-2xs ${
+                          darkMode ? 'border-gray-600' : 'border-slate-300'
+                        }`}
+                        required
+                      >
+                        <option value="">Select Class</option>
+                        <option value="FE">FE (First Year)</option>
+                        <option value="SE">SE (Second Year)</option>
+                        <option value="TE">TE (Third Year)</option>
+                        <option value="BE">BE (Fourth Year)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className={`block mb-1.5 text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-slate-700'}`}>Academic Year</label>
+                      <input
+                        type="text"
+                        name="academicYear"
+                        placeholder="e.g. 2024-25"
+                        value={editForm.academicYear}
+                        onChange={handleEditFormChange}
+                        style={{
+                          backgroundColor: darkMode ? '#374151' : '#ffffff',
+                          color: darkMode ? '#ffffff' : '#0f172a'
+                        }}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-400 shadow-2xs ${
+                          darkMode ? 'border-gray-600 placeholder-gray-400' : 'border-slate-300 placeholder-slate-400'
+                        }`}
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block mb-1 font-medium">Course Name</label>
-                    <input
-                      type="text"
-                      name="courseName"
-                      value={editForm.courseName}
-                      onChange={handleEditFormChange}
-                      className={`w-full p-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
-                      required
-                    />
-                  </div>
+                {/* Section: Schedule */}
+                <div className={`rounded-2xl border p-4 shadow-2xs ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className={`block mb-1.5 text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-slate-700'}`}>Semester</label>
+                      <select
+                        name="semester"
+                        value={editForm.semester}
+                        onChange={handleEditFormChange}
+                        style={{
+                          backgroundColor: darkMode ? '#374151' : '#ffffff',
+                          color: darkMode ? '#ffffff' : '#0f172a'
+                        }}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-400 shadow-2xs ${
+                          darkMode ? 'border-gray-600' : 'border-slate-300'
+                        }`}
+                        required
+                      >
+                        <option value="">Select Semester</option>
+                        <option value="1">Semester 1</option>
+                        <option value="2">Semester 2</option>
+                      </select>
+                    </div>
 
-                  <div>
-                    <label className="block mb-1 font-medium">Class</label>
-                    <select
-                      name="className"
-                      value={editForm.className}
-                      onChange={handleEditFormChange}
-                      className={`w-full p-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                      required
-                    >
-                      <option value="">Select Class</option>
-                      <option value="FE">FE (First Year)</option>
-                      <option value="SE">SE (Second Year)</option>
-                      <option value="TE">TE (Third Year)</option>
-                      <option value="BE">BE (Fourth Year)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block mb-1 font-medium">Academic Year</label>
-                    <input
-                      type="text"
-                      name="academicYear"
-                      value={editForm.academicYear}
-                      onChange={handleEditFormChange}
-                      className={`w-full p-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block mb-1 font-medium">Semester</label>
-                    <select
-                      name="semester"
-                      value={editForm.semester}
-                      onChange={handleEditFormChange}
-                      className={`w-full p-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                      required
-                    >
-                      <option value="">Select Semester</option>
-                      <option value="1">Semester 1</option>
-                      <option value="2">Semester 2</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block mb-1 font-medium">Activity Date</label>
-                    <input
-                      type="date"
-                      name="activityDate"
-                      value={editForm.activityDate}
-                      onChange={handleEditFormChange}
-                      className={`w-full p-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
-                      required
-                    />
+                    <div>
+                      <label className={`block mb-1.5 text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-slate-700'}`}>Activity Date</label>
+                      <input
+                        type="date"
+                        name="activityDate"
+                        value={editForm.activityDate}
+                        onChange={handleEditFormChange}
+                        style={{
+                          backgroundColor: darkMode ? '#374151' : '#ffffff',
+                          color: darkMode ? '#ffffff' : '#0f172a'
+                        }}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-400 shadow-2xs ${
+                          darkMode ? 'border-gray-600' : 'border-slate-300'
+                        }`}
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
               </form>
             </div>
 
             {/* Fixed Footer */}
-            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-              <div className="flex justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setEditingActivity(null);
-                  }}
-                  className={`px-4 py-2 rounded-lg ${
-                    darkMode
-                      ? 'bg-gray-700 hover:bg-gray-600'
-                      : 'bg-gray-200 hover:bg-gray-300'
-                  }`}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleEditSubmit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Save Changes
-                </button>
-              </div>
+            <div className={`px-6 py-4 border-t flex-shrink-0 flex justify-end gap-3 ${
+              darkMode ? 'border-gray-700 bg-gray-800' : 'border-slate-200 bg-white'
+            }`}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingActivity(null);
+                }}
+                style={{
+                  backgroundColor: darkMode ? '#374151' : '#f0f9ff',
+                  color: darkMode ? '#e5e7eb' : '#0284c7'
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition-all border border-transparent"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleEditSubmit}
+                style={{
+                  backgroundColor: '#0284c7',
+                  color: '#ffffff',
+                  backgroundImage: 'linear-gradient(to right, #0284c7, #2563eb)'
+                }}
+                className="px-5 py-2 rounded-xl text-sm font-semibold text-white hover:brightness-110 active:brightness-95 transition-all shadow-md shadow-sky-500/20 border-none cursor-pointer"
+              >
+                Save Changes
+              </button>
             </div>
           </div>
         </div>
@@ -1225,51 +1822,67 @@ setSelectedActivity((prevSelected) => {
       
       
      {showDeleteConfirmation && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl`}>
-            <h3 className="text-xl font-bold mb-4">Confirm Delete</h3>
-            <p className={`mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        <div 
+          className="delete-confirmation-modal fixed inset-0 flex items-center justify-center bg-sky-950/40 backdrop-blur-sm z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !deletingActivities) {
+              setShowDeleteConfirmation(false);
+              setActivityToDelete(null);
+              setIsMultiDelete(false);
+              setDeleteError(null);
+            }
+          }}
+        >
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 max-w-sm w-full shadow-2xl border ${darkMode ? 'border-gray-700' : 'border-sky-100'}`}>
+            <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-slate-900'}`}>Confirm Delete</h3>
+            <p className={`mb-6 text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>
               {isMultiDelete 
-                ? `Are you sure you want to delete ${selectedActivities.size} selected activities? This action cannot be undone.`
+                ? `Are you sure you want to delete ${selectedActivities.size} selected activit${selectedActivities.size === 1 ? 'y' : 'ies'}? This action cannot be undone.`
                 : `Are you sure you want to delete this activity? This action cannot be undone.`
               }
             </p>
             {deleteError && (
-              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-xl text-xs">
                 <p>{deleteError}</p>
               </div>
             )}
-            <div className="flex justify-end gap-4">
+            <div className="flex justify-end gap-3">
               <button
+                type="button"
                 onClick={() => {
                   setShowDeleteConfirmation(false);
                   setActivityToDelete(null);
                   setIsMultiDelete(false);
                   setDeleteError(null);
                 }}
-                className={`px-4 py-2 rounded-lg ${
-                  darkMode
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                }`}
+                style={{
+                  backgroundColor: darkMode ? '#374151' : '#f0f9ff',
+                  color: darkMode ? '#e5e7eb' : '#0284c7',
+                  border: darkMode ? '1px solid #4b5563' : '1px solid #bae6fd'
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-all cursor-pointer"
                 disabled={deletingActivities}
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleDeleteConfirm}
-                className={`px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 ${
+                style={{
+                  backgroundColor: '#ef4444',
+                  color: '#ffffff',
+                  border: 'none'
+                }}
+                className={`px-4 py-2 text-white rounded-xl text-sm font-semibold hover:bg-red-600 transition-all cursor-pointer shadow-sm ${
                   deletingActivities ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
                 disabled={deletingActivities}
               >
-                {deletingActivities ? 'Deleting...' : isMultiDelete ? `Delete ${selectedActivities.size} Activities` : 'Delete'}
+                {deletingActivities ? 'Deleting...' : isMultiDelete ? `Delete ${selectedActivities.size} Activit${selectedActivities.size === 1 ? 'y' : 'ies'}` : 'Delete'}
               </button>
             </div>
           </div>
-          
         </div>
-        
       )}
 
       <Sidebar 
@@ -1294,23 +1907,121 @@ setSelectedActivity((prevSelected) => {
         currentDepartments={activityForDeptChange ? [activityForDeptChange.department] : []}
         canEdit={true}
       />
-      {isImageModalOpen && (
+      {/* Modern Multi-Image Modal */}
+      {isImageModalOpen && modalImages.length > 0 && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center p-4"
+          className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 transition-all ${
+            darkMode ? 'bg-black/75 backdrop-blur-xs' : 'bg-sky-950/30 backdrop-blur-xs'
+          }`}
           onClick={closeImageModal}
         >
           <div
-            className={`relative shadow-lg w-full max-w-4xl max-h-[90vh] ${darkMode ? 'bg-gray-900' : 'bg-white'}`}
-            onClick={e => e.stopPropagation()}
+            className={`relative max-w-2xl w-full rounded-2xl shadow-2xl overflow-hidden transition-all flex flex-col ${
+              darkMode ? 'bg-gray-800 text-white border border-gray-700' : 'bg-white text-gray-900 border border-gray-200'
+            }`}
+            style={{ maxHeight: 'calc(100vh - 40px)', boxSizing: 'border-box' }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <img src={modalImageUrl} alt="Full size activity" className="w-full h-auto object-contain max-h-[90vh]" />
-            <button
-              onClick={closeImageModal}
-              className={`absolute top-2 right-2 p-2 rounded-md ${darkMode ? 'text-gray-300 bg-gray-800 hover:bg-gray-700' : 'text-gray-500 bg-white hover:bg-gray-100'}`}
-              aria-label="Close image viewer"
+            <div
+              className={`relative w-full min-h-0 flex-1 rounded-xl overflow-hidden flex items-center justify-center p-2 ${
+                darkMode ? 'bg-gray-900' : 'bg-gray-50 border border-gray-100'
+              }`}
+              style={{ maxHeight: 'calc(100vh - 80px)' }}
             >
-              <FaTimes className="h-6 w-6" />
-            </button>
+              {/* Counter pill top-left */}
+              {modalImages.length > 1 && (
+                <span
+                  className="absolute top-2.5 left-2.5 z-10 text-xs px-2.5 py-1 rounded-full font-semibold pointer-events-none"
+                  style={{
+                    background: darkMode ? 'rgba(31,41,55,0.85)' : 'rgba(255,255,255,0.88)',
+                    color: darkMode ? '#d1d5db' : '#374151',
+                    backdropFilter: 'blur(4px)',
+                    border: darkMode ? '1px solid rgba(75,85,99,0.5)' : '1px solid rgba(209,213,219,0.7)'
+                  }}
+                >
+                  {activeModalImageIndex + 1} / {modalImages.length}
+                </span>
+              )}
+
+              {/* Close button top-right */}
+              <button
+                type="button"
+                onClick={closeImageModal}
+                className="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                style={{
+                  background: darkMode ? 'rgba(31,41,55,0.85)' : 'rgba(255,255,255,0.88)',
+                  color: darkMode ? '#e5e7eb' : '#374151',
+                  backdropFilter: 'blur(4px)',
+                  border: darkMode ? '1px solid rgba(75,85,99,0.5)' : '1px solid rgba(209,213,219,0.7)',
+                  padding: 0
+                }}
+                title="Close"
+              >
+                <FaTimes className="text-sm" />
+              </button>
+
+              <img
+                src={modalImages[activeModalImageIndex] || modalImages[0]}
+                alt="Activity preview"
+                style={{ maxHeight: 'calc(100vh - 100px)', maxWidth: '100%', objectFit: 'contain' }}
+                className="select-none"
+              />
+
+              {/* Left Arrow */}
+              {modalImages.length > 1 && (
+                <button
+                  type="button"
+                  onClick={handlePrevModalImage}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-all cursor-pointer border active:scale-95"
+                  style={{
+                    background: darkMode ? '#374151' : '#ffffff',
+                    borderColor: darkMode ? '#4b5563' : '#d1d5db',
+                    color: darkMode ? '#f3f4f6' : '#1f2937',
+                    padding: 0
+                  }}
+                  title="Previous image"
+                >
+                  <FaChevronLeft className="text-sm" />
+                </button>
+              )}
+
+              {/* Right Arrow */}
+              {modalImages.length > 1 && (
+                <button
+                  type="button"
+                  onClick={handleNextModalImage}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-all cursor-pointer border active:scale-95"
+                  style={{
+                    background: darkMode ? '#374151' : '#ffffff',
+                    borderColor: darkMode ? '#4b5563' : '#d1d5db',
+                    color: darkMode ? '#f3f4f6' : '#1f2937',
+                    padding: 0
+                  }}
+                  title="Next image"
+                >
+                  <FaChevronRight className="text-sm" />
+                </button>
+              )}
+            </div>
+
+            {/* Dot indicators */}
+            {modalImages.length > 1 && (
+              <div className="flex justify-center gap-1.5 py-2 flex-shrink-0">
+                {modalImages.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveModalImageIndex(idx)}
+                    className={`h-2 rounded-full transition-all cursor-pointer ${
+                      idx === activeModalImageIndex
+                        ? 'w-6 bg-sky-400'
+                        : 'w-2 bg-gray-300 dark:bg-gray-600 hover:bg-sky-200'
+                    }`}
+                    style={{ border: 'none', padding: 0 }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

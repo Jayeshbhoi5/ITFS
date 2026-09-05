@@ -244,24 +244,40 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
                     <span className="text-gray-400 text-xs ml-2">▼</span>
                   </button>
                   {deptDropdownOpen && (
-                    <div className={`absolute z-20 mt-1 w-full rounded-xl shadow-lg border max-h-48 overflow-y-auto ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
-                      {user?.departments && user.departments.map(dept => (
-                        <label key={dept} className={`flex items-center px-3 py-2 cursor-pointer text-sm ${darkMode ? 'hover:bg-gray-600' : 'hover:bg-blue-50'}`}>
-                          <input type="checkbox"
-                            checked={formData.departments?.includes(dept) || false}
-                            onChange={e => {
-                              const checked = e.target.checked;
-                              setFormData(prev => {
-                                let nd = prev.departments ? [...prev.departments] : [];
-                                if (checked) { if (!nd.includes(dept)) nd.push(dept); }
-                                else nd = nd.filter(d => d !== dept);
-                                return { ...prev, departments: nd };
-                              });
-                            }}
-                            className="mr-2 accent-blue-600" />
-                          {dept}
-                        </label>
-                      ))}
+                    <div className={`absolute z-20 mt-1 w-full rounded-xl shadow-lg border max-h-48 overflow-y-auto custom-light-scrollbar ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                      {user?.departments && user.departments.map(dept => {
+                        const isChecked = formData.departments?.includes(dept) || false;
+                        return (
+                          <label key={dept} className={`flex items-center px-3 py-2 cursor-pointer text-sm transition-colors ${darkMode ? 'hover:bg-gray-600' : 'hover:bg-blue-50'}`}>
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center mr-2.5 transition-colors flex-shrink-0 ${
+                              isChecked
+                                ? 'bg-blue-600 border-blue-600 text-white'
+                                : darkMode
+                                  ? 'bg-gray-600 border-gray-500'
+                                  : 'bg-white border-gray-300'
+                            }`}>
+                              {isChecked && (
+                                <svg className="w-3 h-3 text-white fill-current" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </div>
+                            <input type="checkbox"
+                              checked={isChecked}
+                              onChange={e => {
+                                const checked = e.target.checked;
+                                setFormData(prev => {
+                                  let nd = prev.departments ? [...prev.departments] : [];
+                                  if (checked) { if (!nd.includes(dept)) nd.push(dept); }
+                                  else nd = nd.filter(d => d !== dept);
+                                  return { ...prev, departments: nd, department: nd[0] || '' };
+                                });
+                              }}
+                              className="sr-only" />
+                            <span className={darkMode ? 'text-gray-200' : 'text-gray-800'}>{dept}</span>
+                          </label>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -285,9 +301,27 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
             </div>
             <div>
               <label className={labelCls}>Description</label>
-              <textarea name="description" value={formData.description} onChange={handleInputChange} rows="4"
+              <textarea 
+                name="description" 
+                value={formData.description} 
+                onChange={(e) => {
+                  handleInputChange(e);
+                  const textarea = e.target;
+                  textarea.style.height = 'auto';
+                  const newHeight = Math.min(Math.max(textarea.scrollHeight, 96), 220);
+                  textarea.style.height = `${newHeight}px`;
+                  textarea.style.overflowY = textarea.scrollHeight > 220 ? 'auto' : 'hidden';
+                }}
                 placeholder="Describe the activity, its objectives and outcomes..."
-                className={`${inputCls} resize-none ${formErrors.description ? 'border-red-400' : ''}`} />
+                style={{
+                  minHeight: '96px',
+                  maxHeight: '220px',
+                  overflowY: 'hidden',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: darkMode ? '#4b5563 #1f2937' : '#cbd5e1 #ffffff'
+                }}
+                className={`${inputCls} resize-none custom-light-scrollbar ${formErrors.description ? 'border-red-400' : ''}`} 
+              />
               {formErrors.description && <p className="text-red-500 text-xs mt-1">{formErrors.description}</p>}
             </div>
           </div>

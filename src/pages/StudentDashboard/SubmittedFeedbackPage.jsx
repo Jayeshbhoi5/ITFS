@@ -85,7 +85,10 @@ const SubmittedFeedbackPage = () => {
   };
 
   const handleViewFeedback = (activityId) => {
-    navigate(`/view-feedback/${activityId}`);
+    const act = submittedActivities.find(a => a.id === activityId);
+    navigate(`/viewfeedbackpage/${activityId}`, {
+      state: { activity: act }
+    });
   };
 
   const handleSearch = (e) => {

@@ -406,40 +406,63 @@ const handleSubmit = async (e) => {
         activePage="activities"
       />
 
+      {/* Success Modal - placed at root level for true screen centering */}
+      {submitted && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center bg-transparent z-50 pointer-events-auto"
+          onClick={() => navigate('/AllActivitiesPage', { state: { feedbackSubmitted: true } })}
+        >
+          <div 
+            className={`relative p-8 rounded-2xl shadow-2xl border max-w-md w-full mx-4 animate-scale-in ${
+              darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-gray-800 border-gray-200'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => navigate('/AllActivitiesPage', { state: { feedbackSubmitted: true } })}
+              className={`absolute top-4 right-4 p-1.5 rounded-full transition-colors cursor-pointer ${
+                darkMode 
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-700' 
+                  : 'text-gray-400 hover:text-gray-500 bg-gray-100 hover:bg-gray-200'
+              }`}
+              aria-label="Close"
+            >
+              <FaTimes className="text-base" />
+            </button>
+
+            <div className="flex flex-col items-center justify-center">
+              <FaCheckCircle className="text-6xl text-green-500 mb-4" />
+              <h3 className="text-2xl font-bold mb-2">
+                {editMode ? 'Feedback Updated!' : 'Feedback Submitted!'}
+              </h3>
+              <p className="text-center">
+                {editMode 
+                  ? `Your feedback has been updated successfully.`
+                  : `Thank you for providing your feedback`
+                }
+              </p>
+              {!editMode && (
+                <p className="text-center mt-2">Your feedback has been submitted successfully.</p>
+              )}
+              <button
+                onClick={() => navigate('/AllActivitiesPage', { 
+                  state: { feedbackSubmitted: true } 
+                })}
+                className="mt-6 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+              >
+                Go to Activities
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}>
-        <div className={`rounded-lg shadow-md transition-colors duration-300 ${
+        <div className={`rounded-lg shadow-md transition-colors duration-300 animate-slide-up ${
           darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'
         }`}>
-          {submitted && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-              <div className={`p-8 rounded-lg shadow-lg max-w-md ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
-                <div className="flex flex-col items-center justify-center">
-                  <FaCheckCircle className="text-6xl text-green-500 mb-4" />
-                  <h3 className="text-2xl font-bold mb-2">
-                    {editMode ? 'Feedback Updated!' : 'Feedback Submitted!'}
-                  </h3>
-                  <p className="text-center">
-                    {editMode 
-                      ? `Your feedback has been updated successfully.`
-                      : `Thank you for providing your feedback`
-                    }
-                  </p>
-                  {!editMode && (
-                    <p className="text-center mt-2">Your feedback has been submitted successfully.</p>
-                  )}
-                  <button
-                    onClick={() => navigate('/AllActivitiesPage',{ 
-                      state: { feedbackSubmitted: true } 
-                    })}
-                    className="mt-6 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-                  >
-                    Go to Activities
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="p-6">
             {/* Back Button */}
             <button

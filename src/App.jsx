@@ -1,8 +1,16 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import { auth, db } from "./firebaseConfig"; 
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
 import { ActivityUserStatusProvider } from './pages/StudentDashboard/ActivityUserStatusManager';
 import { UserSessionProvider, useUserSession } from './UserSessionContext'; // Import from UserSessionContext.jsx
 import { ActivityProvider } from './pages/FacultyDashboard/ActivityContext';  // Add this import
@@ -125,6 +133,7 @@ const App = () => {
       <ActivityProvider>
         <ActivityUserStatusProvider>
           <Router>
+            <ScrollToTop />
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Homepage />} />

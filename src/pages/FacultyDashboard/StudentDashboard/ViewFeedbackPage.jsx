@@ -279,7 +279,7 @@ const ViewFeedbackPage = () => {
         </div>
 
         {/* Feedback and Activity Details */}
-        <div className="p-6 flex-grow">
+        <div className="p-6 flex-grow animate-slide-up">
           <h2 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>
             Feedback Details
           </h2>
