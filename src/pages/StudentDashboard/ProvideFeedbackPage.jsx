@@ -420,12 +420,12 @@ const handleSubmit = async (e) => {
                   </h3>
                   <p className="text-center">
                     {editMode 
-                      ? `Your feedback for "${activity.title || activity.activityName || 'Untitled Activity'}" has been updated successfully.`
-                      : `Thank you for providing your feedback on "${activity.title || activity.activityName || 'Untitled Activity'}"`
+                      ? `Your feedback has been updated successfully.`
+                      : `Thank you for providing your feedback`
                     }
                   </p>
                   {!editMode && (
-                    <p className="text-center mt-2">Activity status has been updated to "Submitted".</p>
+                    <p className="text-center mt-2">Your feedback has been submitted successfully.</p>
                   )}
                   <button
                     onClick={() => navigate('/AllActivitiesPage',{ 

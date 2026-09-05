@@ -367,7 +367,7 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
               <FaCheckCircle className="text-green-500 text-3xl" />
             </div>
             <h2 className="text-xl font-bold mb-2">Activity Uploaded!</h2>
-            <p className="text-gray-500 text-sm mb-6">"{uploadedActivityName}" has been published successfully.</p>
+            <p className="text-gray-500 text-sm mb-6"> Activity has been published successfully.</p>
             <button onClick={() => setIsModalOpen(false)}
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl text-sm transition-all">
               Done
