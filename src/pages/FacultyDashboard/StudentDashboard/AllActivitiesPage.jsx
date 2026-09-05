@@ -472,16 +472,16 @@ const AllActivitiesPage = () => {
         </div>
         
         {/* Search and Filter Section */}
-        <div className="mb-6 flex flex-wrap items-center gap-4">
-            <div className="relative flex-grow">
-              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+            <div className="relative flex-grow flex items-center">
+              <FaSearch className="absolute left-4 text-gray-400 pointer-events-none" style={{top: '50%', transform: 'translateY(-50%)'}} />
               <input
                 type="text"
                 placeholder="Search by activity, faculty, or keyword..."
                 value={searchTerm}
                 onChange={handleSearch}
-                className={`w-full rounded-lg py-3 pl-12 pr-4 transition-all ${
-                  darkMode ? 'bg-gray-700 text-white placeholder-gray-400' : 'bg-gray-100 text-gray-800 placeholder-gray-500'
+                className={`w-full rounded-xl py-3 pl-12 pr-4 border transition-all ${
+                  darkMode ? 'bg-gray-700 text-white placeholder-gray-400 border-gray-600 focus:border-blue-500' : 'bg-gray-50 text-gray-800 placeholder-gray-400 border-gray-200 focus:border-blue-400'
                 }`}
               />
             </div>
@@ -490,8 +490,8 @@ const AllActivitiesPage = () => {
               <select
                 value={academicYearFilter}
                 onChange={(e) => setAcademicYearFilter(e.target.value)}
-                className={`w-full md:w-auto rounded-lg py-3 pl-4 pr-10 transition-all appearance-none ${
-                  darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'
+                className={`w-full md:w-auto rounded-xl py-3 pl-4 pr-10 border transition-all appearance-none ${
+                  darkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-gray-50 text-gray-800 border-gray-200'
                 }`}
               >
                 <option value="">All Academic Years</option>
@@ -508,8 +508,8 @@ const AllActivitiesPage = () => {
               <select
                 value={classNameFilter}
                 onChange={(e) => setClassNameFilter(e.target.value)}
-                className={`w-full md:w-auto rounded-lg py-3 pl-4 pr-10 transition-all appearance-none ${
-                  darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'
+                className={`w-full md:w-auto rounded-xl py-3 pl-4 pr-10 border transition-all appearance-none ${
+                  darkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-gray-50 text-gray-800 border-gray-200'
                 }`}
               >
                 <option value="">All Years</option>
@@ -545,8 +545,8 @@ const AllActivitiesPage = () => {
               filteredActivities.map((activity) => (
                 <div 
                   key={activity.id} 
-                  className={`rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg ${
-                    darkMode ? 'bg-gray-800' : 'bg-white'
+                  className={`rounded-xl shadow-sm border overflow-hidden transition-all duration-300 hover:shadow-md ${
+                    darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
                   }`}
                 >
                   <div className="flex flex-col md:flex-row">

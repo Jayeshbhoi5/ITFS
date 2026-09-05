@@ -612,7 +612,7 @@ setSelectedActivity((prevSelected) => {
 
       <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}>
         <div className="flex flex-col md:flex-row gap-6">
-          <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-4 h-min sticky top-24`}>
+          <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm border p-4 h-min sticky top-24 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
             <div className="flex items-center mb-4 w-full">
               <h2 className="text-xl font-bold flex-shrink-0">Your Activities</h2>
               <div className="flex items-center gap-2 ml-auto">
@@ -722,7 +722,7 @@ setSelectedActivity((prevSelected) => {
           
           {selectedActivity ? (
             <div className="flex-1">
-              <div className={`rounded-lg shadow-md overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} relative`}>
+              <div className={`rounded-xl shadow-sm overflow-hidden border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} relative`}>
                 {hasEditDeletePermission && !isMultiSelectMode && (
                   <div className="absolute top-4 right-4 flex gap-2 z-10">
                     <button

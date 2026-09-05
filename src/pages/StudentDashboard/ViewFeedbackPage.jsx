@@ -286,7 +286,7 @@ const ViewFeedbackPage = () => {
 
           {/* Activity Details */}
           {activity && (
-            <div className={`rounded-lg shadow-md p-6 mb-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className={`rounded-xl shadow-sm border p-6 mb-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
               <h3 className="text-xl font-semibold mb-4">{activity.activityName}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center">
@@ -315,12 +315,12 @@ const ViewFeedbackPage = () => {
 
           {/* Feedback Details */}
           {feedback && (
-            <div className={`rounded-lg shadow-md p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className={`rounded-xl shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
               <h3 className="text-xl font-semibold mb-4">Your Feedback</h3>
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Rating */}
-                <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <h4 className="flex items-center text-lg font-medium mb-2">
+                <div className={`p-4 rounded-xl border ${darkMode ? 'border-gray-700' : 'border-gray-100 bg-gray-50'}`}>
+                  <h4 className="flex items-center text-base font-semibold mb-2">
                     <FaStar className="text-yellow-400 mr-2" />
                     Rating
                   </h4>
@@ -328,13 +328,13 @@ const ViewFeedbackPage = () => {
                 </div>
                 
                 {/* Comments */}
-                <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <h4 className="flex items-center text-lg font-medium mb-2">
+                <div className={`p-4 rounded-xl border ${darkMode ? 'border-gray-700' : 'border-gray-100 bg-gray-50'}`}>
+                  <h4 className="flex items-center text-base font-semibold mb-2">
                     <FaComment className="text-blue-500 mr-2" />
                     Comments
                   </h4>
-                  <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
-                    <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white border border-gray-200'}`}>
+                    <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap text-sm leading-relaxed">
                       {feedback.comments ? feedback.comments : "No comments provided"}
                     </p>
                   </div>
@@ -342,8 +342,8 @@ const ViewFeedbackPage = () => {
                 
                 {/* Submission Date */}
                 {feedback.createdAt && (
-                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                    <p>Submitted On: {feedback.createdAt.toDate ? 
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    <p>Submitted on: {feedback.createdAt.toDate ? 
                       new Date(feedback.createdAt.toDate()).toLocaleString() :
                       new Date(feedback.createdAt).toLocaleString()}
                     </p>

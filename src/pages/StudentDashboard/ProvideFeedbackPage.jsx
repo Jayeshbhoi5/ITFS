@@ -407,8 +407,8 @@ const handleSubmit = async (e) => {
       />
 
       <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}>
-        <div className={`rounded-lg shadow-md transition-colors duration-300 ${
-          darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'
+        <div className={`rounded-xl shadow-sm border transition-colors duration-300 ${
+          darkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-800 border-gray-100'
         }`}>
           {submitted && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -459,7 +459,7 @@ const handleSubmit = async (e) => {
                 : `Provide Feedback for "${activity.title || activity.activityName || 'Untitled Activity'}"`}
             </h3>
 
-            <div className={`p-4 mb-6 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
+            <div className={`p-4 mb-6 rounded-xl border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-blue-50 border-blue-100'}`}>
               <h2 className={`text-xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>
                 {activity.title || activity.activityName || 'Untitled Activity'}
               </h2>
@@ -544,11 +544,11 @@ const handleSubmit = async (e) => {
                   <textarea
                     name="comments"
                     rows="4"
-                    className={`w-full p-3 rounded-lg border ${
+                    className={`w-full p-3 rounded-xl border ${
                       darkMode
                         ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500'
-                        : 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500'
-                    } focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                        : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-500'
+                    } focus:outline-none`}
                     placeholder="Share your thoughts about this activity..."
                     value={formData.comments}
                     onChange={handleInputChange}
@@ -566,11 +566,11 @@ const handleSubmit = async (e) => {
                   <textarea
                     name="suggestions"
                     rows="3"
-                    className={`w-full p-3 rounded-lg border ${
+                    className={`w-full p-3 rounded-xl border ${
                       darkMode
                         ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500'
-                        : 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500'
-                    } focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                        : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-500'
+                    } focus:outline-none`}
                     placeholder="How could this activity be improved?"
                     value={formData.suggestions}
                     onChange={handleInputChange}
@@ -582,10 +582,10 @@ const handleSubmit = async (e) => {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className={`w-half py-3 px-9 rounded-lg font-medium flex items-center justify-center ${
+                    className={`w-half py-3 px-9 rounded-xl font-semibold flex items-center justify-center shadow-sm transition-all ${
                       submitting
-                        ? 'bg-gray-500 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        ? 'bg-gray-500 cursor-not-allowed text-white'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md'
                     }`}
                   >
                     {submitting ? (

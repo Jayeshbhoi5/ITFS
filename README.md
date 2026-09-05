@@ -1,5 +1,6 @@
 # Innovative Teaching Feedback System (ITFS)
 
+<<<<<<< HEAD
 A feedback platform for faculty and students at KBTCOE, Nashik.  
 Built with React + Vite, Firebase (Hosting, Firestore, Auth), and deployed via GitHub Actions.
 
@@ -15,6 +16,13 @@ The URL is managed by the Firebase project `innovative-teaching-feed-2d77a`.
 
 ## Tech Stack
 
+=======
+A feedback platform for faculty and students.  
+Built with React + Vite, Firebase (Hosting, Firestore, Auth), and deployed via GitHub Actions.
+
+## Tech Stack
+
+>>>>>>> 2f6eb43e9c68b6b5d694a9f6020768133aefd4b0
 | Layer | Technology |
 |---|---|
 | Frontend | React 18 + Vite |
@@ -245,6 +253,7 @@ Future students are free to modify:
 A broken rules file can lock everyone out of the database.
 
 ---
+<<<<<<< HEAD
 
 ## Firebase Functions
 
@@ -252,3 +261,5 @@ The `functions/` folder contains a stub (`helloWorld`).
 Functions are NOT automatically deployed by GitHub Actions.  
 To deploy functions, you need Firebase CLI and authorized Google credentials.  
 This is intentional — function deployment has higher risk and requires careful review.
+=======
+>>>>>>> 2f6eb43e9c68b6b5d694a9f6020768133aefd4b0

@@ -1,64 +1,60 @@
-import React, { useState } from 'react';
-import { FaClock, FaCheckCircle, FaBook, FaStar } from 'react-icons/fa';
-import { getDarkModeFromStorage, setDarkModeInStorage } from './darkModeUtils';
-import AllActivitiesPage from './AllActivitiesPage';
+import React from 'react';
+import { FaClock, FaCheckCircle, FaBook } from 'react-icons/fa';
 
-
-// You can remove the darkMode useEffect since setDarkModeInStorage handles document updates
 const StudentMetrics = ({ darkMode, dashboardMetrics }) => {
+  const cards = [
+    {
+      label: 'Pending Feedback',
+      value: dashboardMetrics.pendingFeedback,
+      sub: 'Activities awaiting your feedback',
+      icon: FaClock,
+      colorLight: 'text-red-600',
+      colorDark: 'text-red-400',
+      accent: 'bg-red-50 border-red-100',
+    },
+    {
+      label: 'Feedback Submitted',
+      value: dashboardMetrics.feedbackSubmitted,
+      sub: "Activities you've provided feedback for",
+      icon: FaCheckCircle,
+      colorLight: 'text-green-600',
+      colorDark: 'text-green-400',
+      accent: 'bg-green-50 border-green-100',
+    },
+    {
+      label: 'Total Activities',
+      value: dashboardMetrics.totalActivities,
+      sub: 'All activities assigned to you',
+      icon: FaBook,
+      colorLight: 'text-blue-600',
+      colorDark: 'text-blue-400',
+      accent: 'bg-blue-50 border-blue-100',
+    },
+  ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-      <div className={`p-6 rounded-lg shadow-md transition-colors duration-300 ${
-        darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'
-      }`}>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xl font-semibold">Pending Feedback</h3>
-          <FaClock className={`text-2xl ${darkMode ? 'text-red-400' : 'text-red-600'}`} />
+      {cards.map(({ label, value, sub, icon: Icon, colorLight, colorDark, accent }) => (
+        <div
+          key={label}
+          className={`p-6 rounded-xl border shadow-sm transition-all duration-300 hover:shadow-md ${
+            darkMode
+              ? 'bg-gray-800 text-gray-100 border-gray-700'
+              : `${accent} text-gray-800`
+          }`}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h3 className={`text-sm font-semibold uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              {label}
+            </h3>
+            <Icon className={`text-xl ${darkMode ? colorDark : colorLight}`} />
+          </div>
+          <p className={`text-4xl font-bold ${darkMode ? colorDark : colorLight}`}>
+            {value}
+          </p>
+          <p className="text-sm mt-2 text-gray-500 dark:text-gray-400">{sub}</p>
         </div>
-        <p className={`text-3xl font-bold ${
-          darkMode ? 'text-red-400' : 'text-red-600'
-        }`}>
-          {dashboardMetrics.pendingFeedback}
-        </p>
-        <p className="text-sm mt-2 text-gray-500 dark:text-gray-400">
-          Activities awaiting your feedback
-        </p>
-      </div>
-      
-      <div className={`p-6 rounded-lg shadow-md transition-colors duration-300 ${
-        darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'
-      }`}>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xl font-semibold">Feedback Submitted</h3>
-          <FaCheckCircle className={`text-2xl ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
-        </div>
-        <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-          {dashboardMetrics.feedbackSubmitted}
-        </p>
-        <p className="text-sm mt-2 text-gray-500 dark:text-gray-400">
-          Activities you've provided feedback for
-        </p>
-      </div>
-      
-      <div className={`p-6 rounded-lg shadow-md transition-colors duration-300 ${
-        darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'
-      }`}>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xl font-semibold">Total Activities</h3>
-          <FaBook className={`text-2xl ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-        </div>
-        <p className={`text-3xl font-bold ${
-          darkMode ? 'text-blue-400' : 'text-blue-600'
-        }`}>
-          {dashboardMetrics.totalActivities}
-        </p>
-        <p className="text-sm mt-2 text-gray-500 dark:text-gray-400">
-          All activities assigned to you
-        </p>
-      </div>
-      
-      
+      ))}
     </div>
   );
 };

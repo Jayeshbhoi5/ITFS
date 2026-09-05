@@ -97,6 +97,7 @@ jobs:
           )
           r.raise_for_status()
           print("Firestore rules deployed successfully")
+<<<<<<< HEAD
 
           # Deploy Firestore indexes via Firestore Admin REST API
           with open("firestore.indexes.json", "r") as f:
@@ -116,6 +117,8 @@ jobs:
               print("Firestore indexes deployed successfully")
           else:
               print("No indexes to deploy (firestore.indexes.json is empty)")
+=======
+>>>>>>> 2f6eb43e9c68b6b5d694a9f6020768133aefd4b0
           EOF
 
           rm -f /tmp/sa.json

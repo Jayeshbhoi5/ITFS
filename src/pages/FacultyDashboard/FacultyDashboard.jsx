@@ -357,10 +357,10 @@ const getEnhancedActivities = () => {
                   <h2 className="text-2xl font-bold mb-4">Feedback Summary</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* Activities with Highest Ratings - Now showing top 5 */}
-                    <div className={`p-6 rounded-lg shadow-md transition-colors duration-300 ${
-                      darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'
+                    <div className={`p-6 rounded-xl border shadow-sm transition-colors duration-300 hover:shadow-md ${
+                      darkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-800 border-gray-100'
                     }`}>
-                      <h3 className="text-xl font-semibold mb-4">Top Rated Activities</h3>
+                      <h3 className="text-lg font-semibold mb-4">Top Rated Activities</h3>
                       {activities.length > 0 ? (
                         <div className="space-y-3">
                           {activities
@@ -396,10 +396,10 @@ const getEnhancedActivities = () => {
                       )}
                     </div>
                     {/* Recent Feedback - Now showing only last 5 */}
-                    <div className={`p-6 rounded-lg shadow-md transition-colors duration-300 ${
-                      darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'
+                    <div className={`p-6 rounded-xl border shadow-sm transition-colors duration-300 hover:shadow-md ${
+                      darkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-800 border-gray-100'
                     }`}>
-                      <h3 className="text-xl font-semibold mb-4">Recent Feedback</h3>
+                      <h3 className="text-lg font-semibold mb-4">Recent Feedback</h3>
                       {activities.length > 0 ? (
                         <div className="space-y-3">
                           {activities
@@ -448,10 +448,10 @@ const getEnhancedActivities = () => {
                       )}
                     </div>
                     {/* Feedback Statistics */}
-                    <div className={`p-6 rounded-lg shadow-md transition-colors duration-300 ${
-                      darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'
+                    <div className={`p-6 rounded-xl border shadow-sm transition-colors duration-300 hover:shadow-md ${
+                      darkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-800 border-gray-100'
                     }`}>
-                      <h3 className="text-xl font-semibold mb-4">Rating Distribution</h3>
+                      <h3 className="text-lg font-semibold mb-4">Rating Distribution</h3>
                       <div className="space-y-4">
                         {/* Feedback Completion Rate */}
                         <div className="flex items-center justify-between">

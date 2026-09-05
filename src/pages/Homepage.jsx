@@ -81,17 +81,16 @@ export default function HomePage() {
         </div>
       </div>
 
-      <nav className="sticky top-2 w-full flex justify-between items-center px-4 py-3 bg-white shadow-md z-10">
+      <nav className="sticky top-2 w-full flex justify-between items-center px-4 py-3 bg-white shadow-md z-10" style={{backdropFilter:'blur(8px)', background:'rgba(255,255,255,0.95)'}}>
         <h1 className="text-2xl font-bold">
           <span className="text-blue-700">Innovative Teaching Feedback</span>
         </h1>
         <div className="space-x-4 flex items-center">
-          <a href="#features" className="text-blue-900 hover:text-blue-700 text-sm md:text-base">Features</a>
-          <a href="#benefits" className="text-blue-900 hover:text-blue-700 text-sm md:text-base">Benefits</a>
-          {/* Changed "Team" to "About Us" and linked to separate page */}
-          <Link to="/abouthome" className="text-blue-900 hover:text-blue-700 text-sm md:text-base">About Us</Link>
+          <a href="#features" className="text-blue-900 hover:text-blue-700 text-sm md:text-base transition-colors">Features</a>
+          <a href="#benefits" className="text-blue-900 hover:text-blue-700 text-sm md:text-base transition-colors">Benefits</a>
+          <Link to="/abouthome" className="text-blue-900 hover:text-blue-700 text-sm md:text-base transition-colors">About Us</Link>
           <button 
-            className="bg-blue-700 hover:bg-blue-600 text-white px-3 py-2 text-sm md:text-base rounded font-medium transition-all duration-200"
+            className="bg-blue-700 hover:bg-blue-600 text-white px-4 py-2 text-sm md:text-base rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
             onClick={openSignup}
           >
             Sign Up
@@ -99,7 +98,8 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <section className="flex flex-col md:flex-row items-center justify-between px-6 py-20 min-h-[80vh] w-full bg-gradient-to-b from-white to-blue-50 relative">
+      <section className="flex flex-col md:flex-row items-center justify-between px-6 py-20 min-h-[80vh] w-full bg-gradient-to-b from-white to-blue-50 relative"
+        style={{animation:'fadeInUp 0.6s ease'}}>
         <div className="w-full md:w-1/2 text-center md:text-left mb-10 md:mb-0">
           <h2 className="text-4xl md:text-5xl font-bold text-blue-900">
             Enhancing Education with <span className="text-blue-600">Smart Feedback</span>
@@ -108,7 +108,7 @@ export default function HomePage() {
             A seamless platform for faculty and students to engage in meaningful feedback, driving educational excellence at KBTCOE.
           </p>
           <button 
-            className="mt-8 bg-blue-700 hover:bg-blue-600 text-white px-6 py-3 text-lg rounded font-medium transition-all duration-200"
+            className="mt-8 bg-blue-700 hover:bg-blue-600 text-white px-8 py-3 text-lg rounded-xl font-medium transition-all shadow-md hover:shadow-lg"
             onClick={openSignup}
           >
             Get Started
@@ -118,10 +118,9 @@ export default function HomePage() {
           <img 
             src="/2.jpg"  
             alt="KBTCOE Building" 
-            className="rounded-lg w-full max-w-xl h-auto shadow-xl"
+            className="rounded-2xl w-full max-w-xl h-auto shadow-2xl"
           />
         </div>
-        {/* Blue gradient extended further down */}
         <div 
           className="absolute left-0 right-0 bottom-0 h-48 bg-gradient-to-b from-blue-50 to-transparent" 
           style={{marginBottom: "-120px"}}
@@ -132,21 +131,21 @@ export default function HomePage() {
         <h3 className="text-3xl md:text-4xl font-bold text-blue-900">Features</h3>
         <p className="text-gray-700 mt-4 text-lg">Explore what makes our feedback system effective.</p>
         <div className="grid md:grid-cols-3 gap-8 mt-12 max-w-6xl mx-auto">
-          <div className="p-8 bg-blue-50 rounded-lg shadow-md border border-blue-100 hover:shadow-lg transition-shadow duration-300">
+          <div className="p-8 bg-blue-50 rounded-2xl shadow-sm border border-blue-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <FaCheckCircle className="text-blue-600 text-5xl mx-auto" />
             <h4 className="text-xl font-semibold mt-6 text-blue-800">Real-time Feedback</h4>
             <p className="text-gray-700 mt-3">
               Instant communication between faculty and students for timely improvement.
             </p>
           </div>
-          <div className="p-8 bg-blue-50 rounded-lg shadow-md border border-blue-100 hover:shadow-lg transition-shadow duration-300">
+          <div className="p-8 bg-blue-50 rounded-2xl shadow-sm border border-blue-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <FaCheckCircle className="text-blue-600 text-5xl mx-auto" />
             <h4 className="text-xl font-semibold mt-6 text-blue-800">Performance Analytics</h4>
             <p className="text-gray-700 mt-3">
               Track student progress and identify teaching effectiveness patterns.
             </p>
           </div>
-          <div className="p-8 bg-blue-50 rounded-lg shadow-md border border-blue-100 hover:shadow-lg transition-shadow duration-300">
+          <div className="p-8 bg-blue-50 rounded-2xl shadow-sm border border-blue-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <FaCheckCircle className="text-blue-600 text-5xl mx-auto" />
             <h4 className="text-xl font-semibold mt-6 text-blue-800">Customized Rubrics</h4>
             <p className="text-gray-700 mt-3">
@@ -158,153 +157,87 @@ export default function HomePage() {
 
       <section id="benefits" className="w-full py-20 px-6 text-center bg-blue-50 text-gray-800">
         <h3 className="text-3xl md:text-4xl font-bold text-blue-900">Benefits</h3>
-        <div className="grid md:grid-cols-2 gap-8 mt-10 max-w-5xl mx-auto">
-          <div className="flex items-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+        <div className="grid md:grid-cols-2 gap-6 mt-10 max-w-5xl mx-auto">
+          <div className="flex items-center p-6 bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
             <FaCheckCircle className="text-blue-600 text-2xl mr-4 flex-shrink-0" />
             <span className="text-lg">Enhanced Communication – Transparent and structured feedback sharing.</span>
           </div>
-          <div className="flex items-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+          <div className="flex items-center p-6 bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
             <FaCheckCircle className="text-blue-600 text-2xl mr-4 flex-shrink-0" />
             <span className="text-lg">Continuous Improvement – Helps improve teaching and learning experiences.</span>
           </div>
-          <div className="flex items-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+          <div className="flex items-center p-6 bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
             <FaCheckCircle className="text-blue-600 text-2xl mr-4 flex-shrink-0" />
             <span className="text-lg">Data-Driven Insights – Valuable analytics for decision-making.</span>
           </div>
-          <div className="flex items-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+          <div className="flex items-center p-6 bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
             <FaCheckCircle className="text-blue-600 text-2xl mr-4 flex-shrink-0" />
             <span className="text-lg">Engagement & Collaboration – Encourages participation from students and faculty.</span>
           </div>
         </div>
       </section>
 
-      
       <footer className="w-full bg-blue-900 text-white text-center py-4">
         <p className="text-lg">Innovative Teaching Feedback © 2025. All rights reserved.</p>
       </footer>
 
-      {/* Modal Overlay for Login, Signup, and Forgot Password */}
       {(showLogin || showSignup || showForgotPassword) && (
         <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm z-50 flex items-center justify-center">
-          {/* Login Modal */}
           {showLogin && (
             <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-0 mx-4 overflow-hidden" style={{ width: '892px', height: '600px' }}>
               <div className="flex h-full flex-shrink-0">
-                {/* Left side - College Image */}
                 <div className="hidden md:block w-1/2 bg-blue-100">
-                  <img 
-                    src="/8.png" 
-                    alt="KBTCOE Campus" 
-                    className="w-full h-full object-cover"
-                  />
+                  <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" />
                 </div>
-                
-                {/* Right side - Login Form */}
                 <div className="w-full md:w-1/2 p-4 flex flex-col justify-center h-full">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-blue-900">Log In</h2>
-                    <button 
-                      onClick={closeModals}
-                      className="text-gray-600 hover:text-gray-800 text-2xl bg-transparent"
-                    >
-                      ×
-                    </button>
+                    <button onClick={closeModals} className="text-gray-600 hover:text-gray-800 text-2xl bg-transparent">×</button>
                   </div>
-                  {/* College Logo above login */}
                   <div className="flex justify-center mb-9">
-                    <img 
-                      src="/5.png" 
-                      alt="KBTCOE Logo" 
-                      className="h-20 w-auto"
-                    />
+                    <img src="/5.png" alt="KBTCOE Logo" className="h-20 w-auto" />
                   </div>
-                  <LoginPage 
-                    onClose={closeModals} 
-                    toggleSignup={openSignup}
-                    toggleForgotPassword={openForgotPassword}
-                  />
+                  <LoginPage onClose={closeModals} toggleSignup={openSignup} toggleForgotPassword={openForgotPassword} />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Signup Modal */}
           {showSignup && (
             <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-0 mx-5 overflow-hidden" style={{ width: '892px', height: '600px' }}>
-              <div className="flex h-full flex-shrink-0"> 
-                {/* Left side - College Image */}
+              <div className="flex h-full flex-shrink-0">
                 <div className="hidden md:block w-1/2 bg-blue-100">
-                  <img 
-                    src="/8.png" 
-                    alt="KBTCOE Campus" 
-                    className="w-full h-full object-cover"
-                  />
+                  <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" />
                 </div>
-                
-                {/* Right side - Signup Form */}
                 <div className="w-full md:w-1/2 p-4 flex flex-col justify-center h-full">
                   <div className="flex justify-between items-center mb-2">
                     <h2 className="text-2xl font-bold text-blue-900">Sign Up</h2>
-                    <button 
-                      onClick={closeModals}
-                      className="text-gray-600 hover:text-gray-800 text-xl bg-transparent"
-                    >
-                      ×
-                    </button>
+                    <button onClick={closeModals} className="text-gray-600 hover:text-gray-800 text-xl bg-transparent">×</button>
                   </div>
-                  {/* College Logo above signup */}
                   <div className="flex justify-center mb-3">
-                    <img 
-                      src="/5.png" 
-                      alt="KBTCOE Logo" 
-                      className="h-12 w-auto"
-                    />
+                    <img src="/5.png" alt="KBTCOE Logo" className="h-12 w-auto" />
                   </div>
-                  <SignupPage 
-                    onClose={closeModals} 
-                    toggleLogin={openLogin}
-                  />
+                  <SignupPage onClose={closeModals} toggleLogin={openLogin} />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Forgot Password Modal */}
           {showForgotPassword && (
             <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-0 mx-4 overflow-hidden" style={{ width: '892px', height: '600px' }}>
               <div className="flex h-full flex-shrink-0">
-                {/* Left side - College Image */}
                 <div className="hidden md:block w-1/2 bg-blue-100">
-                  <img 
-                    src="/8.png" 
-                    alt="KBTCOE Campus" 
-                    className="w-full h-full object-cover"
-                  />
+                  <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" />
                 </div>
-                
-                {/* Right side - Forgot Password Form */}
                 <div className="w-full md:w-1/2 p-4 flex flex-col justify-center h-full">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-blue-900">Reset Password</h2>
-                    <button 
-                      onClick={closeModals}
-                      className="text-gray-600 hover:text-gray-800 text-2xl bg-transparent"
-                    >
-                      ×
-                    </button>
+                    <button onClick={closeModals} className="text-gray-600 hover:text-gray-800 text-2xl bg-transparent">×</button>
                   </div>
-                  {/* College Logo above form */}
                   <div className="flex justify-center mb-0">
-                    <img 
-                      src="/5.png" 
-                      alt="KBTCOE Logo" 
-                      className="h-20 w-auto"
-                    />
+                    <img src="/5.png" alt="KBTCOE Logo" className="h-20 w-auto" />
                   </div>
-                  <ForgotPassword 
-                    onClose={closeModals}
-                    toggleLogin={openLogin}
-                  />
+                  <ForgotPassword onClose={closeModals} toggleLogin={openLogin} />
                 </div>
               </div>
             </div>
@@ -312,7 +245,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* First-time Instructions Modal */}
       {showInstructions && (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-8 relative flex flex-col items-center">
