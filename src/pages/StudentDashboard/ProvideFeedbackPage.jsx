@@ -597,6 +597,15 @@ const handleSubmit = async (e) => {
                       <span>{activity.facultyName || activity.faculty}</span>
                     </span>
                   )}
+                  {(activity.courseName || activity.branch) && (
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                      darkMode
+                        ? 'bg-purple-950/40 text-purple-300 border-purple-800/60'
+                        : 'bg-purple-50 text-purple-700 border-purple-200'
+                    }`}>
+                      <span>{activity.courseName || activity.branch}</span>
+                    </span>
+                  )}
                   {(activity.dueDate || activity.activityDate) && (
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                       darkMode
@@ -609,15 +618,6 @@ const handleSubmit = async (e) => {
                           ? new Date(activity.dueDate).toLocaleDateString()
                           : new Date(activity.activityDate).toLocaleDateString()
                       }</span>
-                    </span>
-                  )}
-                  {(activity.courseName || activity.branch) && (
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                      darkMode
-                        ? 'bg-purple-950/40 text-purple-300 border-purple-800/60'
-                        : 'bg-purple-50 text-purple-700 border-purple-200'
-                    }`}>
-                      <span>{activity.courseName || activity.branch}</span>
                     </span>
                   )}
                   {(activity.className || activity.year) && (

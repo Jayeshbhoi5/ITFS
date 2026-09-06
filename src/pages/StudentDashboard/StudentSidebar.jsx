@@ -44,112 +44,127 @@ const StudentSidebar = ({ toggleDarkMode, darkMode, setDarkMode, sidebarOpen, to
     <>
       <div 
         ref={sidebarRef}
-        className={`fixed inset-y-0 left-0 transform transition-transform duration-500 ease-in-out z-30 ${
-          sidebarOpen ? 'w-64' : 'w-16'
-        } ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}
+        style={{ width: sidebarOpen ? '16rem' : '4rem', paddingTop: '4.5rem' }}
+        className={`fixed inset-y-0 left-0 transition-all duration-300 ease-in-out z-30 ${
+          darkMode ? 'bg-gray-800' : 'bg-white'
+        } shadow-lg select-none flex flex-col`}
         onMouseEnter={handleMouseEnter}
       >
-        {/* Collapsed sidebar */}
-        {!sidebarOpen && (
-          <div className="flex flex-col items-center pt-16">
-            <div className="flex flex-col space-y-5 items-center mt-28">
-              <Link to="/student-dashboard" className={`p-2 rounded-xl transition-all duration-200 shadow-sm ${
-                activePage === "dashboard"
-                  ? (darkMode ? 'bg-blue-900/50 text-blue-300 shadow-md' : 'bg-blue-100 text-blue-700 shadow-md')
-                  : (darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' : 'text-blue-700 hover:bg-blue-50 hover:text-blue-600 hover:shadow')
-              }`}>
-                <FaHome className={`text-xl ${activePage === "dashboard" ? (darkMode ? 'text-blue-400' : 'text-blue-600') : ''}`} />
-              </Link>
-              <Link to="/AllActivitiesPage" className={`p-2 rounded-xl transition-all duration-200 shadow-sm ${
-                activePage === "all-activities"
-                  ? (darkMode ? 'bg-blue-900/50 text-blue-300 shadow-md' : 'bg-blue-100 text-blue-700 shadow-md')
-                  : (darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' : 'text-blue-700 hover:bg-blue-50 hover:text-blue-600 hover:shadow')
-              }`}>
-                <FaClipboardList className={`text-xl ${activePage === "all-activities" ? (darkMode ? 'text-blue-400' : 'text-blue-600') : ''}`} />
-              </Link>
-            </div>
-            
-            <div className="absolute bottom-6 flex flex-col space-y-6 items-center">
-              <button 
-                onClick={() => setDarkMode(!darkMode)} 
-                className={`p-2 rounded-xl transition-all duration-200 ${
-                  darkMode ? 'text-yellow-400 hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-100'
+        {/* Top Logo Section: exactly 120px height to lock the nav tabs at the exact same Y position */}
+        <div style={{ height: '120px', minHeight: '120px' }} className="flex items-center justify-center overflow-hidden">
+          <img 
+            src="/5.png" 
+            alt="KBTCOE Logo" 
+            style={{ 
+              height: '88px', 
+              width: '100px', 
+              objectFit: 'contain',
+              opacity: sidebarOpen ? 1 : 0,
+              transform: sidebarOpen ? 'translateY(0)' : 'translateY(-6px)',
+              transition: sidebarOpen ? 'opacity 250ms ease-in-out, transform 250ms ease-out' : 'none',
+              pointerEvents: sidebarOpen ? 'auto' : 'none'
+            }}
+            className={`${darkMode ? 'filter brightness-90' : ''}`} 
+          />
+        </div>
+
+        {/* Navigation items - unified so icons never change position */}
+        <nav className="px-2 mt-2">
+          <ul className="space-y-2">
+            <li>
+              <Link 
+                to="/student-dashboard" 
+                title={!sidebarOpen ? "Dashboard" : undefined}
+                style={{ height: '44px' }}
+                className={`flex items-center w-full rounded-xl transition-all duration-200 shadow-sm overflow-hidden ${
+                  activePage === "dashboard"
+                    ? (darkMode ? 'bg-blue-900/50 text-blue-300 shadow-md' : 'bg-blue-100 text-blue-700 shadow-md')
+                    : (darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' : 'text-blue-700 hover:bg-blue-50 hover:text-blue-600 hover:shadow')
                 }`}
-                style={{ backgroundColor: 'transparent' }}
               >
-                {darkMode ? <FaSun className="text-xl" /> : <FaMoon className="text-xl" />}
-              </button>
-              <button 
-                onClick={handleLogoutClick}
-                className={`p-2 rounded-xl transition-all duration-200 text-red-600 ${
-                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                }`}
-                style={{ backgroundColor: 'transparent' }}
-              >
-                <FaSignOutAlt className="text-xl" />
-              </button>
-            </div>
-          </div>
-        )}
-        
-        {/* Expanded sidebar */}
-        {sidebarOpen && (
-          <div className="p-6 mt-16">
-            <div className="flex items-center justify-center mb-8">
-              <img src="/5.png" alt="KBTCOE Logo" className={`h-12 w-auto ${darkMode ? 'filter brightness-90' : ''}`} />
-            </div>
-            
-            <nav>
-              <ul className="space-y-2">
-                <li>
-                  <Link to="/student-dashboard" className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 shadow-sm ${
-                    activePage === "dashboard"
-                      ? (darkMode ? 'bg-blue-900/50 text-blue-300 shadow-md' : 'bg-blue-100 text-blue-600 shadow-md')
-                      : (darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400 hover:shadow' : 'text-blue-700 hover:bg-blue-50 hover:text-blue-600 hover:shadow')
-                  }`}>
-                    <FaHome className={`text-xl ${activePage === "dashboard" ? (darkMode ? 'text-blue-400' : 'text-blue-600') : ''}`} />
-                    <span className="font-medium">Dashboard</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/AllActivitiesPage" className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 shadow-sm ${
-                    activePage === "all-activities"
-                      ? (darkMode ? 'bg-blue-900/50 text-blue-300 shadow-md' : 'bg-blue-100 text-blue-600 shadow-md')
-                      : (darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400 hover:shadow' : 'text-blue-700 hover:bg-blue-50 hover:text-blue-600 hover:shadow')
-                  }`}>
-                    <FaClipboardList className={`text-xl ${activePage === "all-activities" ? (darkMode ? 'text-blue-400' : 'text-blue-600') : ''}`} />
-                    <span className="font-medium">All Activities</span>
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-            
-            <div className="absolute bottom-0 left-0 right-0 p-6 space-y-2">
-              <button 
-                onClick={toggleDarkMode}
-                className={`flex items-center space-x-3 w-full p-3 rounded-xl transition-all duration-200 ${
-                  darkMode ? 'hover:bg-gray-700 text-yellow-400' : 'hover:bg-gray-100 text-gray-800'
-                }`}
-                style={{ backgroundColor: 'transparent' }}
-              >
-                {darkMode ? <FaSun className="text-xl text-yellow-400" /> : <FaMoon className="text-xl text-gray-800" />}
-                <span className={darkMode ? "text-yellow-400" : "text-gray-800"}>
-                  {darkMode ? 'Light Mode' : 'Dark Mode'}
+                <div style={{ width: '48px', height: '44px', minWidth: '48px' }} className="flex items-center justify-center shrink-0">
+                  <FaHome className={`text-xl ${activePage === "dashboard" ? (darkMode ? 'text-blue-400' : 'text-blue-600') : ''}`} />
+                </div>
+                <span 
+                  style={{ opacity: sidebarOpen ? 1 : 0 }}
+                  className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${
+                    !sidebarOpen ? 'pointer-events-none' : ''
+                  }`}
+                >
+                  Dashboard
                 </span>
-              </button>
-              <button 
-                onClick={handleLogoutClick}
-                className={`flex items-center space-x-3 w-full p-3 text-red-600 rounded-xl transition-all duration-200 ${
-                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/AllActivitiesPage" 
+                title={!sidebarOpen ? "All Activities" : undefined}
+                style={{ height: '44px' }}
+                className={`flex items-center w-full rounded-xl transition-all duration-200 shadow-sm overflow-hidden ${
+                  activePage === "all-activities"
+                    ? (darkMode ? 'bg-blue-900/50 text-blue-300 shadow-md' : 'bg-blue-100 text-blue-700 shadow-md')
+                    : (darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' : 'text-blue-700 hover:bg-blue-50 hover:text-blue-600 hover:shadow')
                 }`}
-                style={{ backgroundColor: 'transparent' }}
               >
-                <FaSignOutAlt className="text-xl" />
-                <span>Logout</span>
-              </button>
+                <div style={{ width: '48px', height: '44px', minWidth: '48px' }} className="flex items-center justify-center shrink-0">
+                  <FaClipboardList className={`text-xl ${activePage === "all-activities" ? (darkMode ? 'text-blue-400' : 'text-blue-600') : ''}`} />
+                </div>
+                <span 
+                  style={{ opacity: sidebarOpen ? 1 : 0 }}
+                  className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${
+                    !sidebarOpen ? 'pointer-events-none' : ''
+                  }`}
+                >
+                  All Activities
+                </span>
+              </Link>
+            </li>
+          </ul>
+        </nav>
+        
+        {/* Bottom Actions - unified so icons never change position */}
+        <div className="absolute bottom-6 left-0 right-0 px-2 space-y-2">
+          <button 
+            onClick={() => setDarkMode(!darkMode)} 
+            title={!sidebarOpen ? (darkMode ? "Light Mode" : "Dark Mode") : undefined}
+            style={{ height: '44px', backgroundColor: 'transparent' }}
+            className={`flex items-center w-full rounded-xl transition-all duration-200 overflow-hidden ${
+              darkMode ? 'hover:bg-gray-700 text-yellow-400' : 'hover:bg-gray-100 text-gray-800'
+            }`}
+          >
+            <div style={{ width: '48px', height: '44px', minWidth: '48px' }} className="flex items-center justify-center shrink-0">
+              {darkMode ? <FaSun className="text-xl text-yellow-400" /> : <FaMoon className="text-xl text-gray-800" />}
             </div>
-          </div>
-        )}
+            <span 
+              style={{ opacity: sidebarOpen ? 1 : 0 }}
+              className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${
+                !sidebarOpen ? 'pointer-events-none' : ''
+              }`}
+            >
+              {darkMode ? 'Light Mode' : 'Dark Mode'}
+            </span>
+          </button>
+          <button 
+            onClick={handleLogoutClick}
+            title={!sidebarOpen ? "Logout" : undefined}
+            style={{ height: '44px', backgroundColor: 'transparent' }}
+            className={`flex items-center w-full text-red-600 rounded-xl transition-all duration-200 overflow-hidden ${
+              darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+            }`}
+          >
+            <div style={{ width: '48px', height: '44px', minWidth: '48px' }} className="flex items-center justify-center shrink-0">
+              <FaSignOutAlt className="text-xl" />
+            </div>
+            <span 
+              style={{ opacity: sidebarOpen ? 1 : 0 }}
+              className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${
+                !sidebarOpen ? 'pointer-events-none' : ''
+              }`}
+            >
+              Logout
+            </span>
+          </button>
+        </div>
       </div>
 
       <LogoutConfirmation

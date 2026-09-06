@@ -72,6 +72,7 @@ const StudentFeedback = () => {
   const [modalImages, setModalImages] = useState([]);
   const [activeModalImageIndex, setActiveModalImageIndex] = useState(0);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [showMobileDetail, setShowMobileDetail] = useState(false);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
@@ -483,10 +484,11 @@ const handleDeleteConfirm = async () => {
       // Clear selection if selected activity was deleted
       if (selectedActivity && selectedActivities.has(selectedActivity.id)) {
         console.log('Selected activity was deleted, clearing selection');
-setSelectedActivity((prevSelected) => {
-  const remainingActivities = activities.filter((activity) => !selectedActivities.has(activity.id));
-  return remainingActivities.length > 0 ? remainingActivities[0] : null;
-});
+        setSelectedActivity((prevSelected) => {
+          const remainingActivities = activities.filter((activity) => !selectedActivities.has(activity.id));
+          return remainingActivities.length > 0 ? remainingActivities[0] : null;
+        });
+        setShowMobileDetail(false);
       }
       
       // Reset multi-select state
@@ -535,10 +537,11 @@ setSelectedActivity((prevSelected) => {
       if (selectedActivity && selectedActivity.id === activityToDelete) {
         console.log('Selected activity was deleted, clearing selection');
 
-          setSelectedActivity((prevSelected) => {
-            const remainingActivities = activities.filter((activity) => activity.id !== activityToDelete);
-            return remainingActivities.length > 0 ? remainingActivities[0] : null;
-          });
+        setSelectedActivity((prevSelected) => {
+          const remainingActivities = activities.filter((activity) => activity.id !== activityToDelete);
+          return remainingActivities.length > 0 ? remainingActivities[0] : null;
+        });
+        setShowMobileDetail(false);
       }
       
       console.log('Single delete operation completed successfully');
@@ -801,7 +804,9 @@ setSelectedActivity((prevSelected) => {
       <div className={`p-5 lg:p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}>
         <div className="flex flex-col lg:flex-row items-start gap-5 lg:gap-6">
           {/* ── Left panel: strictly locked/sticky, internal scroll only ── */}
-          <div className={`activities-left-panel w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-18 z-10 rounded-2xl border flex flex-col overflow-hidden ${
+          <div className={`activities-left-panel w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-18 z-10 rounded-2xl border flex-col overflow-hidden ${
+            showMobileDetail ? 'hidden lg:flex' : 'flex'
+          } ${
             darkMode
               ? 'bg-gray-800 border-gray-700 shadow-lg'
               : 'bg-white border-slate-200/80 shadow-md'
@@ -892,55 +897,89 @@ setSelectedActivity((prevSelected) => {
                   return (
                     <div 
                       key={activity.id}
+                      onClick={() => {
+                        if (!isMultiSelectMode) {
+                          setSelectedActivity(activity);
+                          setIsDescriptionExpanded(false);
+                          setShowMobileDetail(true);
+                        }
+                      }}
                       style={{
                         animationDelay: `${idx * 30}ms`,
-                        backgroundColor: isSelected 
-                          ? (darkMode ? 'rgba(14, 165, 233, 0.15)' : '#f0f9ff')
-                          : (darkMode ? 'transparent' : '#ffffff'),
+                        backgroundColor: isSelected
+                          ? (darkMode ? 'rgba(14, 165, 233, 0.1)' : '#f1f8fe')
+                          : (darkMode ? 'rgba(31, 41, 55, 0.4)' : '#ffffff'),
                         border: isSelected
-                          ? '2px solid #0284c7'
-                          : darkMode ? '1px solid #374151' : '1px solid #e2e8f0',
+                          ? (darkMode ? '1px solid #0284c7' : '1px solid #38bdf8')
+                          : (darkMode ? '1px solid rgba(55, 65, 81, 0.6)' : '1px solid #e2e8f0'),
+                        borderLeft: isSelected
+                          ? (darkMode ? '4px solid #38bdf8' : '4px solid #0284c7')
+                          : (darkMode ? '1px solid rgba(55, 65, 81, 0.6)' : '1px solid #e2e8f0'),
                         boxShadow: isSelected
-                          ? '0 2px 8px rgba(2, 132, 199, 0.15)'
+                          ? '0 4px 14px rgba(14, 165, 233, 0.1)'
                           : 'none'
                       }}
-                      className={`p-3 rounded-2xl cursor-pointer transition-all duration-200 relative ${
+                      className={`p-3.5 rounded-2xl cursor-pointer transition-all duration-200 relative ${
                         isSelected
-                          ? darkMode ? 'text-white font-medium' : 'text-slate-900 font-medium'
-                          : darkMode
-                            ? 'hover:bg-sky-950/30 hover:border-sky-700/50'
-                            : 'hover:bg-sky-50/60 hover:border-sky-200 shadow-2xs'
+                          ? '-translate-y-1 scale-[1.01] z-10'
+                          : 'hover:bg-slate-50/70 hover:-translate-y-0.5 hover:shadow-sm'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div
-                          onClick={() => {
+                          onClick={(e) => {
                             if (!isMultiSelectMode) {
+                              e.stopPropagation();
                               setSelectedActivity(activity);
                               setIsDescriptionExpanded(false);
+                              setShowMobileDetail(true);
                             }
                           }}
                           className="flex-1 min-w-0"
                         >
-                          <h3 className={`font-semibold text-sm leading-snug ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                            <span
-                              style={{
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
-                                wordBreak: 'break-word',
-                              }}
-                              title={activity.activityName}
-                            >
-                              {activity.activityName}
-                            </span>
-                          </h3>
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className={`font-semibold text-sm leading-snug ${
+                              isSelected 
+                                ? darkMode ? 'text-sky-400 font-bold' : 'text-sky-600 font-bold' 
+                                : darkMode ? 'text-gray-100' : 'text-gray-800'
+                            }`}>
+                              <span
+                                style={{
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden',
+                                  wordBreak: 'break-word',
+                                }}
+                                title={activity.activityName}
+                              >
+                                {activity.activityName}
+                              </span>
+                            </h3>
+                            {isSelected && (
+                              <span className="flex h-2 w-2 relative mt-1.5 mr-0.5 shrink-0" title="Selected">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+                              </span>
+                            )}
+                          </div>
                           {(Array.isArray(activity.departments) && activity.departments.length > 0) ? (
-                            <span className={`block text-xs mt-0.5 truncate ${darkMode ? 'text-gray-400' : 'text-sky-600/75'}`}>{activity.departments.join(', ')}</span>
+                            <span className={`block text-xs mt-0.5 truncate ${
+                              isSelected 
+                                ? darkMode ? 'text-gray-300' : 'text-slate-600' 
+                                : darkMode ? 'text-gray-400' : 'text-sky-600/75'
+                            }`}>
+                              {activity.departments.join(', ')}
+                            </span>
                           ) : (
                             activity.department && (
-                              <span className={`block text-xs mt-0.5 truncate ${darkMode ? 'text-gray-400' : 'text-sky-600/75'}`}>{activity.department}</span>
+                              <span className={`block text-xs mt-0.5 truncate ${
+                                isSelected 
+                                ? darkMode ? 'text-gray-300' : 'text-slate-600' 
+                                : darkMode ? 'text-gray-400' : 'text-sky-600/75'
+                              }`}>
+                                {activity.department}
+                              </span>
                             )
                           )}
                           <div className="flex items-center justify-between mt-2">
@@ -980,9 +1019,6 @@ setSelectedActivity((prevSelected) => {
                           </span>
                         )}
                       </div>
-                      {isSelected && (
-                        <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-sky-500" />
-                      )}
                     </div>
                   );
                 })}
@@ -996,7 +1032,7 @@ setSelectedActivity((prevSelected) => {
           </div>
           
           {selectedActivity ? (
-            <div className="flex-1 min-w-0 animate-fade-in-up" key={selectedActivity.id}>
+            <div className={`w-full lg:flex-1 min-w-0 animate-fade-in-up ${showMobileDetail ? 'block' : 'hidden lg:block'}`} key={selectedActivity.id}>
               <div
                 className={`rounded-2xl shadow-lg overflow-hidden border flex flex-col ${
                   darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 shadow-sm'
@@ -1005,6 +1041,25 @@ setSelectedActivity((prevSelected) => {
               >
                 {/* Hero header — fixed/locked at top */}
                 <div className={`px-6 pt-5 pb-5 border-b relative flex-shrink-0 z-10 ${darkMode ? 'border-gray-700/80 bg-gray-800' : 'border-slate-100 bg-slate-50/90 backdrop-blur-xs'}`}>
+                  {/* Mobile Back Button */}
+                  <div className="lg:hidden mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowMobileDetail(false)}
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                        darkMode ? 'hover:bg-slate-700' : 'hover:bg-sky-100'
+                      }`}
+                      style={{
+                        backgroundColor: darkMode ? '#1e293b' : '#f0f9ff',
+                        color: darkMode ? '#38bdf8' : '#0284c7',
+                        border: darkMode ? '1px solid #334155' : '1px solid #bae6fd'
+                      }}
+                    >
+                      <FaChevronLeft className="text-xs" style={{ color: darkMode ? '#38bdf8' : '#0284c7' }} />
+                      <span>Back to Activities</span>
+                    </button>
+                  </div>
+
                   {hasEditDeletePermission && !isMultiSelectMode && (
                     <div className="absolute top-4 right-4 flex gap-2 z-20">
                       <button
@@ -1308,7 +1363,7 @@ setSelectedActivity((prevSelected) => {
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center min-h-[28rem] animate-scale-in">
+            <div className="hidden lg:flex flex-1 items-center justify-center min-h-[28rem] animate-scale-in">
               <div className={`text-center p-10 rounded-2xl border ${
                 darkMode ? 'border-gray-700 bg-gray-800/50' : 'border-sky-100 bg-white/80 shadow-sm'
               }`}>

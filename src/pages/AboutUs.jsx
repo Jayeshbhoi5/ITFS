@@ -26,6 +26,7 @@ const AboutUs = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showDeptModal, setShowDeptModal] = useState(false);
   const [deptEditMode, setDeptEditMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -53,6 +54,11 @@ const AboutUs = () => {
     }
   }, [darkMode]);
 
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
   const { user } = useUserSession();
 
   const teamMembers = [
@@ -74,7 +80,7 @@ const AboutUs = () => {
     },
     {
       name: 'Jayesh Bhoi',
-      bio: 'Specialized in system development & implementation of feedback mechanisms.',
+      bio: 'Contributed to developing and implementing feedback mechanisms and system solutions.',
       role: 'Roll no: 10',
       image: '/jayesh4.png',
       email: 'jayeshb249@gmail.com',
@@ -98,7 +104,66 @@ const AboutUs = () => {
   };
 
   return (
-    <div className={`relative w-full min-h-screen ${darkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-white text-gray-800'}`}>
+    <div className={`relative w-full min-h-screen itf-about ${darkMode ? 'itf-about-dark' : 'itf-about-light'}`}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+        .itf-about { font-family: 'Inter', system-ui, sans-serif; }
+        .itf-about-heading { font-family: 'Outfit', 'Inter', system-ui, sans-serif; letter-spacing: -0.01em; }
+        .itf-about-ink { color: #0f172a; }
+        .itf-about-dark .itf-about-ink { color: #f8fafc; }
+
+        .itf-about-light {
+          background-color: #f8fafc;
+          color: #334155;
+        }
+        .itf-about-dark {
+          background-color: #111827;
+          color: #e2e8f0;
+        }
+
+        .itf-about-glass {
+          border-radius: 1.25rem;
+          transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+        .itf-about-light .itf-about-glass {
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+        .itf-about-dark .itf-about-glass {
+          background: #1f2937;
+          border: 1px solid #374151;
+          box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+        }
+        .itf-about-card:hover { transform: translateY(-3px); }
+        .itf-about-light .itf-about-card:hover { background: #ffffff; box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.08); }
+        .itf-about-dark .itf-about-card:hover { background: #1f2937; box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.45); }
+
+        .itf-about-accent { color: #0284c7; }
+        .itf-about-dark .itf-about-accent { color: #38bdf8; }
+        .itf-about-gradient-text {
+          background: linear-gradient(120deg, #0284c7, #0369a1);
+          -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+
+        .itf-about-avatar-ring {
+          padding: 3px;
+          background: linear-gradient(135deg, #0284c7, #075985);
+          border-radius: 9999px;
+        }
+
+        .itf-about-reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .itf-about-mounted .itf-about-reveal { opacity: 1; transform: translateY(0); }
+        .itf-about-reveal.d1 { transition-delay: 0.05s; }
+        .itf-about-reveal.d2 { transition-delay: 0.15s; }
+        .itf-about-reveal.d3 { transition-delay: 0.25s; }
+
+        @media (prefers-reduced-motion: reduce) {
+          .itf-about-reveal { transition: none !important; opacity: 1 !important; transform: none !important; }
+        }
+      `}</style>
+
       {/* Department Selection Modal */}
       <DepartmentSelectionModal
         isOpen={showDeptModal}
@@ -108,8 +173,9 @@ const AboutUs = () => {
         currentDepartments={user?.departments || []}
         canEdit={true}
       />
-      {/* Fixed Navbar with no border */}
-      <div className={`fixed top-0 left-0 right-4 z-50 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+
+      {/* Sticky Navbar */}
+      <div className={`fixed top-0 left-0 right-0 z-50 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
         <Navbar 
           darkMode={darkMode} 
           setDarkMode={setDarkMode}
@@ -122,7 +188,7 @@ const AboutUs = () => {
         />
       </div>
 
-      <div className="flex pt-16"> {/* Add pt-16 to account for fixed navbar height */}
+      <div className="flex pt-16">
         {/* Sidebar with dark mode toggle */}
         <Sidebar 
           darkMode={darkMode} 
@@ -132,13 +198,14 @@ const AboutUs = () => {
         />
 
         {/* Main content area with seamless transition */}
-        <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-16'}`}>
-          <div className="p-8">
+        <div className={`flex-1 transition-all duration-300 relative z-10 ${sidebarOpen ? 'ml-64' : 'ml-16'} ${mounted ? 'itf-about-mounted' : ''}`}>
+
+          <div className="p-8 relative z-10">
             <div className="max-w-6xl mx-auto">
               {/* About Section */}
-              <section className="mb-16">
-                <h1 className="text-4xl font-bold mb-6">About Us</h1>
-                <div className={`p-6 rounded-lg shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+              <section className="mb-12 itf-about-reveal d1">
+                <h1 className="itf-about-heading itf-about-ink text-4xl font-bold mb-6">About Us</h1>
+                <div className="itf-about-glass p-6">
                   <p className="text-lg mb-4">
                     Welcome to Innovative Teaching Feedback, a platform designed to enhance the teaching-learning experience through effective feedback mechanisms.
                   </p>
@@ -150,18 +217,20 @@ const AboutUs = () => {
                   </p>
                 </div>
               </section>
-              <div className={`rounded-xl shadow-lg p-8 mb-12 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                <h3 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>Our Mission & Vision</h3>
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-100'}`}>
-                    <h4 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>Mission</h4>
-                    <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+
+              {/* Mission & Vision */}
+              <div className="itf-about-glass p-8 mb-10 itf-about-reveal d2">
+                <h3 className="itf-about-heading itf-about-ink text-2xl font-bold mb-6">Our Mission & Vision</h3>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="itf-about-glass itf-about-card p-6">
+                    <h4 className="itf-about-heading text-xl font-semibold mb-3 itf-about-accent">Mission</h4>
+                    <p className="opacity-80">
                       To create a responsive educational ecosystem where timely feedback leads to measurable improvements in teaching methodologies and learning outcomes for all students at KBTCOE.
                     </p>
                   </div>
-                  <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-100'}`}>
-                    <h4 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>Vision</h4>
-                    <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                  <div className="itf-about-glass itf-about-card p-6">
+                    <h4 className="itf-about-heading text-xl font-semibold mb-3 itf-about-accent">Vision</h4>
+                    <p className="opacity-80">
                       To establish KBTCOE as a pioneering institute where continuous feedback and improvement become the foundation of educational excellence and student success.
                     </p>
                   </div>
@@ -169,43 +238,45 @@ const AboutUs = () => {
               </div>
 
               {/* Team Section */}
-              <div className={`rounded-xl shadow-lg p-8 mb-12 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                <h3 className={`text-2xl font-bold mb-8 ${darkMode ? 'text-blue-400' : 'text-blue-900'}`}>Our Team</h3>
+              <div className="itf-about-glass p-8 mb-10 itf-about-reveal d3">
+                <h3 className="itf-about-heading itf-about-ink text-2xl font-bold mb-8">Our Team</h3>
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {teamMembers.map((member, index) => (
-                    <div key={index} className={`p-6 rounded-lg text-center hover:shadow-md transition duration-300 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-100'}`}>
+                    <div key={index} className="itf-about-glass itf-about-card text-center p-6">
                       <div className="flex flex-col items-center">
-                        <div className={`w-40 h-40 rounded-full mb-4 overflow-hidden aspect-square ${darkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>
-                          {member.image ? (
-                            <img 
-                              src={member.image} 
-                              alt={member.name} 
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.parentNode.innerHTML = `
-                                  <div class="w-full h-full flex items-center justify-center text-4xl ${darkMode ? 'text-blue-400' : 'text-blue-800'} font-medium">
-                                    ${member.name.charAt(0)}
-                                  </div>`;
-                              }}
-                            />
-                          ) : (
-                            <div className={`w-full h-full flex items-center justify-center text-4xl ${darkMode ? 'text-blue-400' : 'text-blue-800'} font-medium`}>
-                              {member.name.charAt(0)}
-                            </div>
-                          )}
+                        <div className="itf-about-avatar-ring mb-4">
+                          <div className="w-36 h-36 rounded-full overflow-hidden aspect-square bg-white/40">
+                            {member.image ? (
+                              <img 
+                                src={member.image} 
+                                alt={member.name} 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.parentNode.innerHTML = `
+                                    <div class="w-full h-full flex items-center justify-center text-4xl itf-about-accent font-medium">
+                                      ${member.name.charAt(0)}
+                                    </div>`;
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-4xl itf-about-accent font-medium">
+                                {member.name.charAt(0)}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <h4 className={`text-xl font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>{member.name}</h4>
-                        <p className={`font-medium mt-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{member.role}</p>
-                        <p className={`mt-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{member.bio}</p>
+                        <h4 className="itf-about-heading itf-about-ink text-xl font-semibold">{member.name}</h4>
+                        <p className="font-medium mt-1 opacity-80">{member.role}</p>
+                        <p className="mt-3 opacity-70">{member.bio}</p>
                         <div className="flex flex-col items-center space-y-2 mt-4 text-sm">
                           <div className="flex items-center">
-                            <FaEnvelope className={`mr-2 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`} />
-                            <a href={`mailto:${member.email}`} className={`hover:text-blue-400 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{member.email}</a>
+                            <FaEnvelope className="mr-2 itf-about-accent" />
+                            <a href={`mailto:${member.email}`} className="hover:opacity-100 opacity-80 transition-opacity">{member.email}</a>
                           </div>
                           <div className="flex items-center">
-                            <FaPhone className={`mr-2 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`} />
-                            <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>{member.phone}</span>
+                            <FaPhone className="mr-2 itf-about-accent" />
+                            <span className="opacity-80">{member.phone}</span>
                           </div>
                         </div>
                       </div>
@@ -215,38 +286,10 @@ const AboutUs = () => {
               </div>
 
               {/* Project Guide Section */}
-              <div className={`rounded-xl shadow-lg p-8 mb-12 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                <h3 className={`text-2xl font-bold mb-4 text-center ${darkMode ? 'text-blue-400' : 'text-blue-900'}`}>Project Guide</h3>
+              <div className="itf-about-glass p-8 mb-10 itf-about-reveal d3">
+                <h3 className="itf-about-heading itf-about-ink text-2xl font-bold mb-4 text-center">Project Guide</h3>
                 <div className="text-center">
-                  <p className={`text-xl font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Dr. Vaishali S. Tidake</p>
-                </div>
-              </div>
-
-              {/* Project Details - Fixed with dark mode support */}
-              <div className={`rounded-xl shadow-lg p-8 mb-12 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                <h3 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-blue-400' : 'text-blue-900'}`}>Project Details</h3>
-                <div className="space-y-6">
-                  <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-100'}`}>
-                    <h4 className={`text-xl font-semibold mb-3 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>Technologies Used</h4>
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <div className={`p-4 rounded shadow-sm ${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
-                        <h5 className={`font-medium ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>Frontend</h5>
-                        <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>React.js, Tailwind CSS</p>
-                      </div>
-                      <div className={`p-4 rounded shadow-sm ${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
-                        <h5 className={`font-medium ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>Backend</h5>
-                        <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Firebase (Firestore Database, Authentication)</p>
-                      </div>
-                      <div className={`p-4 rounded shadow-sm ${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
-                        <h5 className={`font-medium ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>Deployment</h5>
-                        <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Firebase Hosting</p>
-                      </div>
-                      <div className={`p-4 rounded shadow-sm ${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
-                        <h5 className={`font-medium ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>Media Management</h5>
-                        <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Cloudinary</p>
-                      </div>
-                    </div>
-                  </div>
+                  <p className="text-xl font-semibold opacity-90">Dr. Vaishali S. Tidake</p>
                 </div>
               </div>
             </div>

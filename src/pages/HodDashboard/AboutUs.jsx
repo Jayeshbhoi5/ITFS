@@ -43,7 +43,7 @@ const HodAboutUs = () => {
     },
     {
       name: 'Jayesh Bhoi',
-      bio: 'Specialized in system development & implementation of feedback mechanisms.',
+      bio: 'Contributed to developing and implementing feedback mechanisms and system solutions.',
       role: 'Roll no: 10',
       image: '/jayesh4.png',
       email: 'jayeshb249@gmail.com',

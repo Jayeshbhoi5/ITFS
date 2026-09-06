@@ -485,65 +485,93 @@ const AllActivitiesPage = () => {
 
       {/* Content area */}
       <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out min-h-screen flex flex-col`}>
-        <h2 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>
+        <h2 className={`text-2xl font-bold tracking-tight mb-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
           All Activities
         </h2>
         
         {/* Tab navigation */}
-        <div className="flex space-x-4 mb-6">
-          <button 
-            onClick={() => setActiveTab('all')}
-            className={`px-4 py-2 rounded-lg transition-all duration-300 ${
-              activeTab === 'all'
-                ? (darkMode ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white')
-                : (darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300')
-            }`}
-          >
-            All
-          </button>
-          <button 
-            onClick={() => setActiveTab('pending')}
-            className={`px-4 py-2 rounded-lg transition-all duration-300 ${
-              activeTab === 'pending'
-                ? (darkMode ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white')
-                : (darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300')
-            }`}
-          >
-            Pending
-          </button>
-          <button 
-            onClick={() => setActiveTab('submitted')}
-            className={`px-4 py-2 rounded-lg transition-all duration-300 ${
-              activeTab === 'submitted'
-                ? (darkMode ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white')
-                : (darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300')
-            }`}
-          >
-            Submitted
-          </button>
+        <div className="mb-5 flex">
+          <div className={`inline-flex items-center p-1 rounded-xl border transition-colors ${
+            darkMode 
+              ? 'bg-gray-800/90 border-gray-700/80' 
+              : 'bg-slate-100/90 border-slate-200/90'
+          }`}>
+            <button 
+              onClick={() => setActiveTab('all')}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                activeTab === 'all'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : darkMode 
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-700/60' 
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+              }`}
+            >
+              All
+            </button>
+            <button 
+              onClick={() => setActiveTab('pending')}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                activeTab === 'pending'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : darkMode 
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-700/60' 
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+              }`}
+            >
+              Pending
+            </button>
+            <button 
+              onClick={() => setActiveTab('submitted')}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                activeTab === 'submitted'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : darkMode 
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-700/60' 
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+              }`}
+            >
+              Submitted
+            </button>
+          </div>
         </div>
         
         {/* Search and Filter Section */}
         <div className="mb-6 flex flex-wrap items-center gap-3">
-            <div className="relative flex-grow flex items-center">
-              <FaSearch className="absolute left-4 text-gray-400 pointer-events-none" style={{top: '50%', transform: 'translateY(-50%)'}} />
+            <div className="relative flex-grow min-w-[240px]">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                <FaSearch className="w-3.5 h-3.5" />
+              </div>
               <input
                 type="text"
                 placeholder="Search by activity, faculty, or keyword..."
                 value={searchTerm}
                 onChange={handleSearch}
-                className={`w-full rounded-xl py-3 pl-12 pr-4 border transition-all ${
-                  darkMode ? 'bg-gray-700 text-white placeholder-gray-400 border-gray-600 focus:border-blue-500' : 'bg-gray-50 text-gray-800 placeholder-gray-400 border-gray-200 focus:border-blue-400'
+                className={`w-full rounded-xl py-2.5 pl-10 pr-10 text-sm border transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
+                  darkMode 
+                    ? 'bg-gray-800 text-white placeholder-gray-400 border-gray-700' 
+                    : 'bg-white text-gray-800 placeholder-gray-400 border-gray-200 hover:border-gray-300'
                 }`}
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                  title="Clear search"
+                  type="button"
+                >
+                  <FaTimes className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             {/* Academic Year Filter */}
             <div className="relative">
               <select
                 value={academicYearFilter}
                 onChange={(e) => setAcademicYearFilter(e.target.value)}
-                className={`w-full md:w-auto rounded-xl py-3 pl-4 pr-10 border transition-all appearance-none ${
-                  darkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-gray-50 text-gray-800 border-gray-200'
+                className={`w-full md:w-auto rounded-xl py-2.5 pl-3.5 pr-9 text-sm font-medium border transition-all duration-200 appearance-none shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
+                  darkMode 
+                    ? 'bg-gray-800 text-gray-200 border-gray-700 hover:border-gray-600' 
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <option value="">All Academic Years</option>
@@ -551,8 +579,10 @@ const AllActivitiesPage = () => {
                   <option key={year} value={year}>{year}</option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 dark:text-gray-500">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
             </div>
             {/* Class Name Filter */}
@@ -560,8 +590,10 @@ const AllActivitiesPage = () => {
               <select
                 value={classNameFilter}
                 onChange={(e) => setClassNameFilter(e.target.value)}
-                className={`w-full md:w-auto rounded-xl py-3 pl-4 pr-10 border transition-all appearance-none ${
-                  darkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-gray-50 text-gray-800 border-gray-200'
+                className={`w-full md:w-auto rounded-xl py-2.5 pl-3.5 pr-9 text-sm font-medium border transition-all duration-200 appearance-none shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
+                  darkMode 
+                    ? 'bg-gray-800 text-gray-200 border-gray-700 hover:border-gray-600' 
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <option value="">All Years</option>
@@ -570,8 +602,10 @@ const AllActivitiesPage = () => {
                 <option value="TE">TE</option>
                 <option value="BE">BE</option>
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 dark:text-gray-500">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
             </div>
         </div>
