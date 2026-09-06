@@ -142,7 +142,8 @@ const App = () => {
               <Route path="/student-about" element={<StudentAboutUs darkMode={darkMode} />} />
               <Route path="/abouthome" element={<Abouthome darkMode={darkMode} />} />
               <Route path="/signup" element={<SignupPage />} />
-              <Route path="/login" element={<LoginPage />} />
+              <Route path="/login" element={<Navigate to="/" replace />} />
+              <Route path="/LOGIN" element={<Navigate to="/" replace />} />
               <Route path="/forgotpassword" element={<ForgotPassword />} />
 
               {/* Contact Us Routes */}
@@ -232,6 +233,9 @@ const App = () => {
               <Route path="/StudentMetrics" element={<StudentMetrics />} />
               <Route path="/StudentSidebar" element={<StudentSidebar />} />
               <Route path="/logout" element={<LogoutHandler />} />
+              
+              {/* Catch-all route to redirect any unknown URL to home */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Router>
         </ActivityUserStatusProvider>

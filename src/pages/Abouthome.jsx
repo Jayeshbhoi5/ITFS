@@ -190,7 +190,7 @@ export default function AboutUs() {
       {/* College Header Banner */}
       <div className="relative z-10 w-full py-4 border-b border-sky-100/70">
         <div className="container mx-auto max-w-screen-lg flex flex-col md:flex-row items-center justify-center px-4 text-center">
-          <img src="/5.png" alt="KBTCOE Logo" className="h-16 w-auto mx-4 mb-2 md:mb-0" />
+         <img src="/5.png" alt="KBTCOE Logo" className="h-16 w-24 mx-7 mb-6 md:mb-0" />
           <div className="text-center flex-1 w-full">
             <h2 className="itf-heading text-sky-700 font-semibold text-lg md:text-xl">
               Maratha Vidya Prasarak Samaj's
