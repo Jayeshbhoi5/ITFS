@@ -59,7 +59,7 @@ export default function AboutUs() {
     },
     {
       name: "Jayesh Bhoi",
-      bio: "Contributed to developing and implementing feedback mechanisms and system solutions.",
+      bio: "Contributed to developing & implementing feedback mechanisms & system solutions.",
       role: "Roll no: 10",
       image: "/jayesh4.png",
       email: "jayeshb249@gmail.com",
@@ -280,7 +280,7 @@ export default function AboutUs() {
           {/* Project Team Section */}
           <div className="itf-glass rounded-2xl p-8">
             <h3 className="itf-heading text-2xl font-bold text-sky-900 mb-8">Our Team</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
               {teamMembers.map((member, index) => (
                 <div
                   key={index}
