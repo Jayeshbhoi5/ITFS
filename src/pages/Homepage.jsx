@@ -63,6 +63,18 @@ export default function HomePage() {
     setShowInstructions(false);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        closeModals();
+      }
+    };
+    if (showLogin || showSignup || showForgotPassword || showInstructions) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showLogin, showSignup, showForgotPassword, showInstructions]);
+
   return (
     <div className="relative w-full min-h-screen itf-page" style={{ overflow: 'visible' }}>
       <style>{`
@@ -442,12 +454,14 @@ export default function HomePage() {
 
       {(showLogin || showSignup || showForgotPassword) && (
         <div
-          className="fixed inset-0 bg-sky-950/60 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-3 md:p-4 overflow-y-auto"
-          onClick={closeModals}
+          className="fixed inset-0 bg-sky-950/60 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-3 md:p-4 overflow-y-auto cursor-pointer"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeModals();
+          }}
         >
           {showLogin && (
             <div
-              className="itf-modal rounded-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-auto"
+              className="itf-modal rounded-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-auto cursor-default"
               style={{ width: "900px", height: "560px", maxHeight: "calc(100vh - 2rem)" }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -470,7 +484,7 @@ export default function HomePage() {
                         <p className="text-sky-600 text-xs mt-0.5">Log in to continue to your dashboard</p>
                       </div>
                     </div>
-                    <button onClick={closeModals} className="text-sky-400 hover:text-sky-700 text-2xl bg-transparent leading-none transition-colors">×</button>
+                    <button onClick={closeModals} className="text-sky-400 hover:text-sky-700 text-2xl bg-transparent leading-none transition-colors cursor-pointer">×</button>
                   </div>
                   <LoginPage onClose={closeModals} toggleSignup={openSignup} toggleForgotPassword={openForgotPassword} />
                 </div>
@@ -480,7 +494,7 @@ export default function HomePage() {
 
           {showSignup && (
             <div
-              className="itf-modal rounded-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-auto"
+              className="itf-modal rounded-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-auto cursor-default"
               style={{ width: "900px", height: "600px", maxHeight: "calc(100vh - 1.5rem)" }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -515,8 +529,8 @@ export default function HomePage() {
 
           {showForgotPassword && (
             <div
-              className="itf-modal rounded-2xl w-full max-w-4xl mx-4 overflow-hidden flex flex-col"
-              style={{ width: "900px", height: "440px" }}
+              className="itf-modal rounded-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-auto cursor-default"
+              style={{ width: "900px", height: "440px", maxHeight: "calc(100vh - 2rem)" }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="itf-modal-strip" />
@@ -538,7 +552,7 @@ export default function HomePage() {
                         <p className="text-sky-600 text-xs mt-0.5">We'll email you a secure reset link</p>
                       </div>
                     </div>
-                    <button onClick={closeModals} className="text-sky-400 hover:text-sky-700 text-2xl bg-transparent leading-none transition-colors">×</button>
+                    <button onClick={closeModals} className="text-sky-400 hover:text-sky-700 text-2xl bg-transparent leading-none transition-colors cursor-pointer">×</button>
                   </div>
                   <ForgotPassword onClose={closeModals} toggleLogin={openLogin} />
                 </div>
@@ -550,11 +564,11 @@ export default function HomePage() {
 
       {showInstructions && (
         <div
-          className="fixed inset-0 bg-sky-950/40 z-50 flex items-center justify-center"
+          className="fixed inset-0 bg-sky-950/40 z-50 flex items-center justify-center cursor-pointer"
           onClick={() => setShowInstructions(false)}
         >
           <div
-            className="itf-modal rounded-2xl max-w-lg w-full p-8 relative flex flex-col items-center mx-4"
+            className="itf-modal rounded-2xl max-w-lg w-full p-8 relative flex flex-col items-center mx-4 cursor-default"
             onClick={(e) => e.stopPropagation()}
           >
             <img src="/5.png" alt="KBTCOE Logo" className="h-16 w-auto mb-4 mx-auto" />

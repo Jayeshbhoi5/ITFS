@@ -845,9 +845,25 @@ const SignupPage = ({ onClose, toggleLogin }) => {
   );
 
   const isStandalone = !onClose && !toggleLogin;
+
+  useEffect(() => {
+    if (isStandalone) {
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') navigate('/');
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isStandalone, navigate]);
+
   if (isStandalone) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center p-3 md:p-4 bg-sky-50/70 overflow-y-auto">
+      <div 
+        className="min-h-screen w-full flex items-center justify-center p-3 md:p-4 bg-sky-950/60 backdrop-blur-md overflow-y-auto cursor-pointer"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) navigate('/');
+        }}
+      >
         <style>{`
           .itf-modal {
             background: rgba(255, 255, 255, 0.98);
@@ -859,8 +875,9 @@ const SignupPage = ({ onClose, toggleLogin }) => {
           }
         `}</style>
         <div 
-          className="itf-modal rounded-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row shadow-2xl bg-white my-auto"
+          className="itf-modal rounded-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row shadow-2xl bg-white my-auto cursor-default"
           style={{ width: "900px", height: "600px", maxHeight: "calc(100vh - 1.5rem)" }}
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="hidden md:block w-1/2 relative">
             <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" />
@@ -879,6 +896,12 @@ const SignupPage = ({ onClose, toggleLogin }) => {
                   <p className="text-sky-600 text-xs mt-0.5">Sign up with your organization email</p>
                 </div>
               </div>
+              <button 
+                onClick={() => navigate('/')} 
+                className="text-sky-400 hover:text-sky-700 text-xl bg-transparent leading-none transition-colors cursor-pointer"
+              >
+                ×
+              </button>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto afm-white-scroll pr-2 md:pr-3">
               {formContent}

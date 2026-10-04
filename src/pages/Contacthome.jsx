@@ -41,6 +41,18 @@ export default function Contacthome() {
     setShowForgotPassword(false);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        closeModals();
+      }
+    };
+    if (showLogin || showSignup || showForgotPassword) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showLogin, showSignup, showForgotPassword]);
+
   return (
     <div className={`relative w-full min-h-screen itf-page ${mounted ? "itf-mounted" : ""}`} style={{ overflow: 'visible' }}>
       <style>{`
@@ -313,11 +325,17 @@ export default function Contacthome() {
 
       {/* Modal Overlay for Login, Signup, and Forgot Password */}
       {(showLogin || showSignup || showForgotPassword) && (
-        <div className="fixed inset-0 bg-sky-950/60 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-3 md:p-4 overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-sky-950/60 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-3 md:p-4 overflow-y-auto cursor-pointer"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeModals();
+          }}
+        >
           {showLogin && (
             <div
-              className="itf-modal rounded-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-auto"
+              className="itf-modal rounded-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-auto cursor-default"
               style={{ width: "900px", height: "560px", maxHeight: "calc(100vh - 2rem)" }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="itf-modal-strip" />
               <div className="flex flex-1 min-h-0">
@@ -348,8 +366,9 @@ export default function Contacthome() {
 
           {showSignup && (
             <div
-              className="itf-modal rounded-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-auto"
+              className="itf-modal rounded-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-auto cursor-default"
               style={{ width: "900px", height: "600px", maxHeight: "calc(100vh - 1.5rem)" }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="itf-modal-strip" />
               <div className="flex flex-1 min-h-0">
@@ -382,8 +401,9 @@ export default function Contacthome() {
 
           {showForgotPassword && (
             <div
-              className="itf-modal rounded-2xl w-full max-w-4xl mx-4 overflow-hidden flex flex-col"
-              style={{ width: "900px", height: "440px" }}
+              className="itf-modal rounded-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-auto cursor-default"
+              style={{ width: "900px", height: "440px", maxHeight: "calc(100vh - 2rem)" }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="itf-modal-strip" />
               <div className="flex flex-1 min-h-0">

@@ -75,7 +75,7 @@ const ForgotPassword = ({ onClose, toggleLogin }) => {
     }
   };
 
-  return (
+  const formContent = (
     <div className={`afm-root w-full h-full flex flex-col justify-center ${mounted ? "afm-mounted" : ""}`}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');
@@ -204,6 +204,74 @@ const ForgotPassword = ({ onClose, toggleLogin }) => {
       </div>
     </div>
   );
+
+  const isStandalone = !onClose && !toggleLogin;
+
+  useEffect(() => {
+    if (isStandalone) {
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') navigate('/');
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isStandalone, navigate]);
+
+  if (isStandalone) {
+    return (
+      <div 
+        className="min-h-screen w-full flex items-center justify-center p-3 md:p-4 bg-sky-950/60 backdrop-blur-md overflow-y-auto cursor-pointer"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) navigate('/');
+        }}
+      >
+        <style>{`
+          .itf-modal {
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(224, 242, 254, 0.9);
+            box-shadow: 0 35px 80px -15px rgba(3, 105, 161, 0.5), 0 0 0 1px rgba(125, 211, 252, 0.3);
+          }
+          .itf-modal-caption {
+            background: linear-gradient(to top, rgba(3, 25, 41, 0.85) 0%, rgba(3, 25, 41, 0.25) 55%, transparent 100%);
+          }
+        `}</style>
+        <div 
+          className="itf-modal rounded-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row shadow-2xl bg-white my-auto cursor-default"
+          style={{ width: "900px", height: "440px", maxHeight: "calc(100vh - 2rem)" }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="hidden md:block w-1/2 relative">
+            <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 itf-modal-caption" />
+            <div className="absolute bottom-5 left-5 right-5">
+              <p className="itf-heading text-white text-lg font-semibold">KBTCOE</p>
+              <p className="text-white/80 text-sm mt-1">We'll help you get back in.</p>
+            </div>
+          </div>
+          <div className="w-full md:w-1/2 p-6 flex flex-col justify-center h-full overflow-hidden">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <img src="/5.png" alt="KBTCOE Logo" className="w-12 h-13 bg-white object-contain p-1 flex-shrink-0" />
+                <div>
+                  <h2 className="itf-heading text-2xl font-bold text-sky-900 leading-tight">Reset Password</h2>
+                  <p className="text-sky-600 text-xs mt-0.5">We'll email you a secure reset link</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => navigate('/')} 
+                className="text-sky-400 hover:text-sky-700 text-2xl bg-transparent leading-none transition-colors cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+            {formContent}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return formContent;
 };
 
 export default ForgotPassword;
