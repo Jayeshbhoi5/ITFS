@@ -12,6 +12,7 @@ export default function Contacthome() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    document.documentElement.classList.remove('dark');
     const t = setTimeout(() => setMounted(true), 20);
     return () => clearTimeout(t);
   }, []);

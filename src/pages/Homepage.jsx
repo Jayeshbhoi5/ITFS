@@ -16,6 +16,7 @@ export default function HomePage() {
   const [activeNav, setActiveNav] = useState('');
 
   useEffect(() => {
+    document.documentElement.classList.remove('dark');
     const hasSeenInstructions = localStorage.getItem("hasSeenInstructions");
     if (!hasSeenInstructions) {
       setShowInstructions(true);

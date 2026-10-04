@@ -40,6 +40,7 @@ const SignupPage = ({ onClose, toggleLogin }) => {
   };
 
   useEffect(() => {
+    document.documentElement.classList.remove('dark');
     const t = setTimeout(() => setMounted(true), 40);
     return () => clearTimeout(t);
   }, []);
@@ -537,6 +538,17 @@ const SignupPage = ({ onClose, toggleLogin }) => {
           border-color: #0ea5e9;
           background: rgba(255, 255, 255, 0.85);
           box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
+        }
+        .afm-input:-webkit-autofill,
+        .afm-input:-webkit-autofill:hover,
+        .afm-input:-webkit-autofill:focus,
+        .afm-input:-webkit-autofill:active {
+          -webkit-text-fill-color: #0c4a6e !important;
+          -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+          box-shadow: 0 0 0px 1000px #ffffff inset !important;
+          border-color: rgba(148, 197, 224, 0.75) !important;
+          caret-color: #0284c7 !important;
+          transition: background-color 5000s ease-in-out 0s;
         }
 
         .afm-btn-primary {

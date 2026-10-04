@@ -158,16 +158,57 @@ button:focus {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Prevent Chrome/Edge browser autofill from turning inputs yellowish/brownish in dark mode */
-.dark input:-webkit-autofill,
-.dark input:-webkit-autofill:hover, 
-.dark input:-webkit-autofill:focus,
-.dark textarea:-webkit-autofill,
-.dark textarea:-webkit-autofill:hover,
-.dark textarea:-webkit-autofill:focus {
+/* Universal browser autofill styling: prevent yellow/black autofill on light forms */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+select:-webkit-autofill:active {
+  -webkit-text-fill-color: #0c4a6e !important;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  caret-color: #0284c7 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Explicit rule for auth modals and light inputs (.afm-input): ALWAYS clean white background */
+.afm-input:-webkit-autofill,
+.afm-input:-webkit-autofill:hover,
+.afm-input:-webkit-autofill:focus,
+.afm-input:-webkit-autofill:active,
+.dark .afm-input:-webkit-autofill,
+.dark .afm-input:-webkit-autofill:hover,
+.dark .afm-input:-webkit-autofill:focus,
+.dark .afm-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #0c4a6e !important;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  border-color: rgba(148, 197, 224, 0.75) !important;
+  caret-color: #0284c7 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Dark mode inputs in dark mode dashboards only (exclude auth modals and light cards) */
+.dark input:not(.afm-input):not([type="button"]):not([type="submit"]):-webkit-autofill,
+.dark input:not(.afm-input):not([type="button"]):not([type="submit"]):-webkit-autofill:hover, 
+.dark input:not(.afm-input):not([type="button"]):not([type="submit"]):-webkit-autofill:focus,
+.dark input:not(.afm-input):not([type="button"]):not([type="submit"]):-webkit-autofill:active,
+.dark textarea:not(.afm-input):-webkit-autofill,
+.dark textarea:not(.afm-input):-webkit-autofill:hover,
+.dark textarea:not(.afm-input):-webkit-autofill:focus,
+.dark textarea:not(.afm-input):-webkit-autofill:active,
+.dark select:not(.afm-input):-webkit-autofill {
   -webkit-text-fill-color: #f1f5f9 !important;
-  -webkit-box-shadow: 0 0 0px 1000px #2e3745 inset !important;
-  box-shadow: 0 0 0px 1000px #2e3745 inset !important;
+  -webkit-box-shadow: 0 0 0px 1000px #1e293b inset !important;
+  box-shadow: 0 0 0px 1000px #1e293b inset !important;
+  caret-color: #38bdf8 !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 

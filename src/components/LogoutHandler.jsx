@@ -19,6 +19,7 @@ const LogoutHandler = () => {
         sessionStorage.removeItem('itfs_student_class_name_filter');
         sessionStorage.removeItem('itfs_student_filter_is_manual');
         sessionStorage.removeItem('itfs_student_filter_uid');
+        document.documentElement.classList.remove('dark');
       } catch (error) {
         console.error("Logout failed:", error);
       }
