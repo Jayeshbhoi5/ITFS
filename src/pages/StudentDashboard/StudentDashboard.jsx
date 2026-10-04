@@ -5,7 +5,8 @@ import DashboardMetrics from './StudentMetrics';
 import ActivityCarousel from './ActivityCarousel';
 import { useActivities } from "../FacultyDashboard/ActivityContext";
 import { useActivityUserStatus } from "./ActivityUserStatusManager";
-import DepartmentSelectionModal from '../../components/DepartmentSelectionModal';
+import DepartmentSelectionModal, { getCurrentAcademicYear } from '../../components/DepartmentSelectionModal';
+import Toast from '../../components/Toast';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from "../../firebaseConfig";
 import { useUserSession } from '../../UserSessionContext';
@@ -14,13 +15,16 @@ const StudentDashboard = () => {
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("darkMode") === "enabled"
   );
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('sidebarOpen')) || false; } catch { return false; }
+  });
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [activities, setActivities] = useState([]);
   const { user, setUser } = useUserSession();
   const [showDeptModal, setShowDeptModal] = useState(false);
   const [deptEditMode, setDeptEditMode] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   
   // Get activities from context
   const { activities: contextActivities } = useActivities();
@@ -183,38 +187,62 @@ const StudentDashboard = () => {
   const handleDeptSubmit = async ({ departments, year, academicYear, yearSelectedAt }) => {
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
+    const activeAcademicYear = academicYear || getCurrentAcademicYear();
+    const newChangeCount = deptEditMode ? 1 : (user.departmentChangeCount || 0);
+
+    // Close modal instantly with ZERO delay & show toast immediately
+    setShowDeptModal(false);
+    setDeptEditMode(false);
+    setToast({ show: true, message: 'Department updated successfully!', type: 'success' });
+
+    // Optimistically update user session state
+    setUser({
+      ...user,
+      departments,
+      departmentChangeCount: newChangeCount,
+      academicYear: activeAcademicYear,
+      ...(year ? { year, baseYear: year, yearSelectedAt } : {}),
+    });
+
+    // Auto-apply student's chosen defaults for All Activities page
     try {
-      const newChangeCount = deptEditMode ? 1 : (user.departmentChangeCount || 0);
+      if (year) {
+        sessionStorage.setItem('itfs_student_class_name_filter', year);
+      }
+      sessionStorage.setItem('itfs_student_academic_year_filter', activeAcademicYear);
+      sessionStorage.removeItem('itfs_student_filter_is_manual');
+      sessionStorage.setItem('itfs_student_filter_uid', user.uid);
+    } catch {}
+
+    // Save to Firestore in background
+    try {
       const updateData = {
         departments,
         departmentChangeCount: newChangeCount,
+        academicYear: activeAcademicYear,
       };
       if (year) {
+        updateData.year = year;
         updateData.baseYear = year;
         updateData.yearSelectedAt = yearSelectedAt;
       }
-      if (academicYear) {
-        updateData.academicYear = academicYear;
-      }
       await updateDoc(userRef, updateData);
-
-      setUser({
-        ...user,
-        departments,
-        departmentChangeCount: newChangeCount,
-        ...(year ? { baseYear: year, yearSelectedAt } : {}),
-        ...(academicYear ? { academicYear } : {}),
-      });
-      
-      setShowDeptModal(false);
-      setDeptEditMode(false);
     } catch (err) {
-      alert('Failed to update department. Please try again.');
+      console.error('Error updating department in Firestore:', err);
+      setToast({ show: true, message: 'Failed to update department. Please try again.', type: 'error' });
     }
   };
 
   return (
-    <div className={`min-h-full ${darkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-800"}`}>
+    <div className={`min-h-full pt-[4.5rem] ${darkMode ? "bg-gray-900 text-gray-100" : "bg-[#f8fcff] text-slate-800"}`}>
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          darkMode={darkMode}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
       {/* Department Selection Modal */}
       <DepartmentSelectionModal
         isOpen={showDeptModal}
@@ -222,7 +250,10 @@ const StudentDashboard = () => {
         onSubmit={handleDeptSubmit}
         userType="student"
         currentDepartments={user?.departments || []}
+        currentPrimaryDepartment={user?.primaryDepartment || user?.departments?.[0] || ''}
+        currentYear={user?.year || user?.baseYear || ''}
         canEdit={user?.departmentChangeCount < 1 || (!user.departments || user.departments.length === 0)}
+        darkMode={darkMode}
       />
       {/* Navigation Bar */}
       <Navbar 
@@ -231,18 +262,15 @@ const StudentDashboard = () => {
         showProfileMenu={showProfileMenu}
         toggleProfileMenu={toggleProfileMenu}
         sidebarOpen={sidebarOpen}
+        user={user}
         onEditDepartment={handleEditDepartment}
       />
       {/* Block dashboard if department not set */}
       {(!user?.departments || user.departments.length === 0) ? (
         <div className="flex justify-center items-center h-96 text-xl font-semibold">Please select your department to continue.</div>
       ) : (
-        <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} min-h-screen transition-all duration-300 ease-in-out`}>
-          {loading || statusLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-          ) : (
+        <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} min-h-screen transition-all duration-300 ease-in-out page-smooth-enter`}>
+          {!loading && !statusLoading && (
             <>
               <ActivityCarousel 
                 darkMode={darkMode}
@@ -259,12 +287,13 @@ const StudentDashboard = () => {
       )}
       {/* Sidebar */}
       <Sidebar 
-  darkMode={darkMode} 
-  sidebarOpen={sidebarOpen} 
-  toggleSidebar={toggleSidebar}
-  toggleDarkMode={toggleDarkMode} 
-  activePage="dashboard" // This should be "dashboard" for dashboard page
-/>
+        darkMode={darkMode} 
+        setDarkMode={setDarkMode}
+        sidebarOpen={sidebarOpen} 
+        toggleSidebar={toggleSidebar}
+        toggleDarkMode={toggleDarkMode} 
+        activePage="dashboard"
+      />
     </div>
   );
 };

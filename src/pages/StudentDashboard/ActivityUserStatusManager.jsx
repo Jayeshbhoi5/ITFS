@@ -47,7 +47,8 @@ export const ActivityUserStatusProvider = ({ children }) => {
 
   // Real-time listener for feedback changes
   useEffect(() => {
-    if (!userId) {
+    // Only student accounts submit student feedback
+    if (!userId || (user?.role && user.role !== 'Student')) {
       setLoading(false);
       return;
     }
@@ -60,12 +61,20 @@ export const ActivityUserStatusProvider = ({ children }) => {
         where('studentId', '==', userId)
       );
       
-      unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const activityIds = querySnapshot.docs.map(doc => doc.data().activityId);
-        const uniqueActivityIds = [...new Set(activityIds)];
-        setSubmittedActivities(uniqueActivityIds);
-        setLoading(false);
-      });
+      unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          const activityIds = querySnapshot.docs.map(doc => doc.data().activityId);
+          const uniqueActivityIds = [...new Set(activityIds)];
+          setSubmittedActivities(uniqueActivityIds);
+          setLoading(false);
+        },
+        (error) => {
+          // Handle channel re-connection or temporary stream resets gracefully
+          console.warn("Feedback status listener notice:", error?.message || error);
+          setLoading(false);
+        }
+      );
     } catch (error) {
       console.error("Error setting up feedback status listener:", error);
       setLoading(false);
@@ -74,7 +83,7 @@ export const ActivityUserStatusProvider = ({ children }) => {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [userId]);
+  }, [userId, user?.role]);
 
   const fetchSubmittedActivities = useCallback(async () => {
     try {

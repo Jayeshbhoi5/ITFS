@@ -12,7 +12,7 @@ import { getDarkModeFromStorage, setDarkModeInStorage } from './darkModeUtils';
 // You can remove the darkMode useEffect since setDarkModeInStorage handles document updates
 const PendingFeedbackPage = () => {
   
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => { try { return JSON.parse(sessionStorage.getItem('sidebarOpen')) || false; } catch { return false; } });
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('All');
@@ -144,7 +144,7 @@ const toggleDarkMode = () => {
   // If an activity is selected, render the feedback form
   if (selectedActivity) {
     return (
-      <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-800'} transition-colors duration-300`}>
+      <div className={`min-h-screen pt-[4.5rem] ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-800'} transition-colors duration-300`}>
         {/* Navigation Bar */}
         <Navbar 
           darkMode={darkMode} 
@@ -186,7 +186,7 @@ const toggleDarkMode = () => {
   }
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-800'} transition-colors duration-300`}>
+    <div className={`min-h-screen pt-[4.5rem] ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-800'} transition-colors duration-300`}>
       {/* Navigation Bar */}
       <Navbar 
         darkMode={darkMode} 
@@ -197,7 +197,7 @@ const toggleDarkMode = () => {
       />
 
       {/* Content area */}
-      <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} min-h-screen transition-all duration-300 ease-in-out`}>
+      <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} min-h-screen transition-all duration-300 ease-in-out page-smooth-enter`}>
       <div className="flex justify-between items-center mb-6">
           <h2 className={`text-2xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>
             Pending Feedback

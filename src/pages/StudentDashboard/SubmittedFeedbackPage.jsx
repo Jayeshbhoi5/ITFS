@@ -9,7 +9,7 @@ import { getDarkModeFromStorage, setDarkModeInStorage } from './darkModeUtils';
 
 // You can remove the darkMode useEffect since setDarkModeInStorage handles document updates
 const SubmittedFeedbackPage = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => { try { return JSON.parse(sessionStorage.getItem('sidebarOpen')) || false; } catch { return false; } });
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [searchTerm, setSearchTerm] = useState('');
@@ -135,7 +135,7 @@ const SubmittedFeedbackPage = () => {
       />
 
       {/* Content area */}
-      <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} min-h-screen transition-all duration-300 ease-in-out`}>
+      <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} min-h-screen transition-all duration-300 ease-in-out page-smooth-enter`}>
         <div className="flex justify-between items-center mb-6">
           <h2 className={`text-2xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>
             Submitted Feedback

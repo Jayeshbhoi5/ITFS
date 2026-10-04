@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaUpload, FaImage, FaVideo, FaSpinner, FaTimes, FaCheckCircle, FaCalendarAlt, FaBook, FaUser, FaBuilding } from 'react-icons/fa';
+import { FaUpload, FaImage, FaVideo, FaSpinner, FaTimes, FaCheckCircle, FaCalendarAlt, FaBook, FaUser, FaBuilding, FaFilePdf } from 'react-icons/fa';
 import { useActivities } from './ActivityContext';
 import { uploadToCloudinary } from '../../cloudinaryUtils';
 import { useUserSession } from '../../UserSessionContext';
@@ -107,6 +107,7 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
         totalStudents: 0, averageRating: 0, comments: [],
         fileCount: fileUrls.length, fileUrls,
         mainImage: fileUrls.length > 0 ? fileUrls[0].url : null,
+        pages: fileUrls.length > 0 ? (fileUrls[0].pages || 1) : 1,
         status: 'Active',
         facultyId: user?.uid,
         department: formData.department,
@@ -156,8 +157,7 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
   const sectionCls = `rounded-2xl border p-5 mb-5 ${darkMode ? 'bg-gray-800/60 border-gray-700' : 'bg-gray-50 border-gray-100'}`;
 
   return (
-    <div className={`rounded-2xl shadow-sm border overflow-hidden ${darkMode ? 'bg-gray-900 text-gray-100 border-gray-700' : 'bg-white text-gray-800 border-gray-100'}`}
-      style={{ animation: 'fadeInUp 0.4s ease' }}>
+    <div className={`rounded-2xl shadow-sm border overflow-hidden page-smooth-enter ${darkMode ? 'bg-gray-900 text-gray-100 border-gray-700' : 'bg-white text-gray-800 border-gray-100'}`}>
 
       {/* Header */}
       <div className={`px-6 py-4 flex items-center gap-3 border-b ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
@@ -251,7 +251,7 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
                           <label key={dept} className={`flex items-center px-3 py-2 cursor-pointer text-sm transition-colors ${darkMode ? 'hover:bg-gray-600' : 'hover:bg-blue-50'}`}>
                             <div className={`w-4 h-4 rounded border flex items-center justify-center mr-2.5 transition-colors flex-shrink-0 ${
                               isChecked
-                                ? 'bg-blue-600 border-blue-600 text-white'
+                                ? 'border-sky-500 text-white'
                                 : darkMode
                                   ? 'bg-gray-600 border-gray-500'
                                   : 'bg-white border-gray-300'
@@ -339,8 +339,8 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
                 <FaImage className="text-blue-500 text-xl" />
               </div>
               <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Click to upload or drag & drop</p>
-              <p className="text-xs text-gray-400 mt-1">JPG, PNG, MP4 — max 10MB each</p>
-              <input type="file" multiple accept="image/*,video/*" onChange={handleFileChange} className="hidden" />
+              <p className="text-xs text-gray-400 mt-1">JPG, PNG, PDF — max 10MB each</p>
+              <input type="file" multiple accept="image/*,video/*,application/pdf,.pdf" onChange={handleFileChange} className="hidden" />
             </label>
             {formErrors.files && <p className="text-red-500 text-xs mt-2">{formErrors.files}</p>}
 
@@ -348,8 +348,13 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
               <div className="mt-4 grid grid-cols-3 md:grid-cols-5 gap-3">
                 {filePreview.map((file, index) => (
                   <div key={index} className="relative group">
-                    {file.type.includes('image') ? (
+                    {file.type?.includes('image') ? (
                       <img src={file.url} alt="Preview" className="h-20 w-full object-cover rounded-xl" />
+                    ) : file.type?.includes('pdf') || file.name?.toLowerCase().endsWith('.pdf') ? (
+                      <div className={`h-20 w-full rounded-xl flex flex-col items-center justify-center p-2 text-center ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                        <FaFilePdf className="text-2xl text-red-500 mb-1" />
+                        <span className="text-[10px] text-gray-400 font-semibold truncate w-full">PDF</span>
+                      </div>
                     ) : (
                       <div className={`h-20 w-full rounded-xl flex items-center justify-center ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                         <FaVideo className="text-2xl text-gray-400" />
@@ -383,7 +388,8 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
           {/* Submit */}
           <div className="flex justify-end pt-2">
             <button type="submit" disabled={isSubmitting}
-              className="flex items-center gap-2 px-7 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-sm transition-all disabled:opacity-50 text-sm">
+              className="flex items-center gap-2 px-7 py-3 text-white rounded-xl font-semibold shadow-sm transition-all disabled:opacity-50 text-sm active:scale-95 hover:brightness-110"
+              style={!isSubmitting ? { background: 'linear-gradient(135deg,#0284c7,#075985)', boxShadow: '0 6px 18px rgba(2,132,199,0.4)' } : { background: '#9ca3af' }}>
               {isSubmitting ? <><FaSpinner className="animate-spin" /> Uploading...</> : <><FaUpload /> Upload Activity</>}
             </button>
           </div>
@@ -403,7 +409,8 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
             <h2 className="text-xl font-bold mb-2">Activity Uploaded!</h2>
             <p className="text-gray-500 text-sm mb-6"> Activity has been published successfully.</p>
             <button onClick={() => setIsModalOpen(false)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl text-sm transition-all">
+              className="text-white font-semibold py-2.5 px-6 rounded-xl text-sm transition-all active:scale-95 hover:brightness-110"
+              style={{ background: 'linear-gradient(135deg,#0284c7,#075985)', boxShadow: '0 4px 14px rgba(2,132,199,0.35)' }}>
               Done
             </button>
           </div>

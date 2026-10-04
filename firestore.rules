@@ -5,7 +5,9 @@ service cloud.firestore {
 
     // --- Reusable Functions ---
     function isRole(role) {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
     }
 
     function currentUser() {
@@ -21,10 +23,15 @@ service cloud.firestore {
     
     // --- Collection Rules ---
 
-    // USERS: Combined rules for HOD and individual access
+    // AUTH STATUS: Track whether users registered via Google or set manual password
+    match /auth_status/{email} {
+      allow read, write: if true;
+    }
+
+    // USERS: Combined rules for HOD, individual access, and login verification
     match /users/{userId} {
-      allow list: if isRole('HOD');
-      allow read: if request.auth.uid == userId || (isRole('HOD') && isFacultyInHodDepartment(userId));
+      allow list: if isRole('HOD') || (request.query.limit <= 2);
+      allow get: if (request.auth != null && (request.auth.uid == userId || (isRole('HOD') && isFacultyInHodDepartment(userId)))) || (request.auth == null);
       allow write: if (request.auth.uid == userId) || (
         isRole('HOD') &&
         isFacultyInHodDepartment(userId) &&

@@ -12,5 +12,11 @@ export const setDarkModeInStorage = (isDark) => {
   } else {
     document.documentElement.classList.remove("dark");
   }
+
+  try {
+    window.dispatchEvent(new CustomEvent('darkModeChange', { detail: { isDark } }));
+  } catch (e) {
+    // ignore
+  }
 };
 

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap');
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -18,42 +20,46 @@ html, body, #root {
   min-height: 100%;
 }
 
+/* Hide Microsoft Edge / IE native password reveal button globally */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 .dark html, .dark body, .dark #root, html.dark, body.dark {
   background-color: #111827;
   color: #f9fafb;
 }
-const globalStyles = `
-  /* Previous styles */
-  
-  /* Add this for bottom sticking elements */
-  .sticky-bottom {
-    position: sticky;
-    bottom: 0;
-    width: 100%;
-  }
-  
-  /* Ensure content fills available space */
-  html, body, #root {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-  }
-`;
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+html {
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  max-width: 100%;
 }
 
 body {
-  overflow-x: hidden;
+  min-height: 100%;
   margin: 0;
   padding: 0;
+  overflow: visible !important;
   width: 100%;
+}
+
+#root {
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: visible !important;
+  width: 100%;
+}
+
+.itf-page {
+  overflow: visible !important;
 }
 
 h1 {
@@ -85,13 +91,6 @@ button:focus-visible {
   scrollbar-width: none;  /* Firefox */
 }
 
-/* Make sure the content doesn't overflow in unexpected ways */
-html, body {
-  overflow-x: hidden;
-  max-width: 100%;
-  max-height: 100%;
-}
-
 /* Default zoom for the page */
 /* Default zoom for the page */
 body {
@@ -103,12 +102,25 @@ zoom:92%
 button.bg-transparent {
   background-color: transparent !important;
 }
-<div className="p-6 flex-grow overflow-auto ...">
 .empty-state-container {
   min-height: 400px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: #f5fbff;
+}
+
+html.dark body {
+  background: #0f172a;
 }
 
 svg.animate-spin, 
@@ -124,10 +136,12 @@ svg.animate-spin path {
   outline: none !important;
 }
 
-/* Remove focus styles for all interactive elements */
+/* Remove focus outline from inputs/textareas (allow box-shadow/ring for custom focus styles) */
 input:focus, 
 textarea:focus, 
-select:focus,
+select:focus {
+  outline: none !important;
+}
 button:focus {
   outline: none !important;
   box-shadow: none !important;
@@ -144,6 +158,19 @@ button:focus {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2) !important;
 }
 
+/* Prevent Chrome/Edge browser autofill from turning inputs yellowish/brownish in dark mode */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover, 
+.dark input:-webkit-autofill:focus,
+.dark textarea:-webkit-autofill,
+.dark textarea:-webkit-autofill:hover,
+.dark textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f1f5f9 !important;
+  -webkit-box-shadow: 0 0 0px 1000px #2e3745 inset !important;
+  box-shadow: 0 0 0px 1000px #2e3745 inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 /* Tailwind override for button focus */
 button:focus {
   outline: none !important;
@@ -153,12 +180,12 @@ button:focus {
 
 /* ── Animations used by inline style references ── */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(28px) translateZ(0); }
+  to   { opacity: 1; transform: translateY(0) translateZ(0); }
 }
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to   { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: translateY(24px) scale(0.96) translateZ(0); }
+  to   { opacity: 1; transform: translateY(0) scale(1) translateZ(0); }
 }
 
 /* Thin scrollbar for activity panel — expands on hover */
@@ -209,6 +236,98 @@ button:focus {
   will-change: transform, opacity;
 }
 
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-slide-in {
+  animation: fadeSlideIn 0.25s ease-out forwards;
+}
+
+/* Visible, smooth bottom-to-top (down to up) opening transition */
+@keyframes pageSmoothEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) translateZ(0);
+  }
+  60% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) translateZ(0);
+  }
+}
+
+.page-smooth-enter {
+  animation: pageSmoothEnter 0.35s cubic-bezier(0.18, 0.9, 0.28, 1) both;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+@keyframes fastFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fast-fade-in {
+  animation: fastFadeIn 0.2s ease-out both;
+  will-change: opacity;
+}
+
+@keyframes itfHomeEnter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.itf-home-enter {
+  animation: itfHomeEnter 0.45s ease-out both;
+  will-change: opacity;
+}
+
+/* Modals & popup dialogs visible bottom-to-top opening transition */
+@keyframes fastScaleIn {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.96) translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) translateZ(0);
+  }
+}
+
+.fast-scale-in {
+  animation: fastScaleIn 0.32s cubic-bezier(0.18, 0.9, 0.28, 1) both;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-smooth-enter,
+  .fast-fade-in,
+  .fast-scale-in,
+  .itf-home-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 /* Light Mode Custom Scrollbar */
 .custom-light-scrollbar {
   scrollbar-width: thin;
@@ -239,4 +358,344 @@ button:focus {
 .dark .custom-light-scrollbar::-webkit-scrollbar-thumb {
   background: #4b5563;
 }
+
+/* Faculty activity carousel — rating row only (no dark glow / backdrop) */
+.carousel-rating-stars {
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.carousel-rating-stars svg {
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+.carousel-rating-stars .carousel-star-filled {
+  color: #fbbf24;
+  fill: #fbbf24;
+  stroke: #ca8a04;
+  stroke-width: 14px;
+  paint-order: stroke fill;
+}
+
+.carousel-rating-stars .carousel-star-empty {
+  color: #ffffff;
+  fill: transparent;
+  stroke: #ca8a04;
+  stroke-width: 14px;
+}
+
+/* ITFS theme loader (no text) */
+.theme-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(1100px 600px at 85% -10%, #dff3ff 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 20%, #e6f7ff 0%, transparent 55%),
+    linear-gradient(180deg, #f5fbff 0%, #eef9ff 40%, #f7fcff 100%);
+}
+
+.theme-loader--dark {
+  background:
+    radial-gradient(900px 500px at 80% -20%, rgba(14, 165, 233, 0.12) 0%, transparent 55%),
+    radial-gradient(700px 400px at -10% 30%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+    linear-gradient(180deg, #0f172a 0%, #111827 45%, #0f172a 100%);
+}
+
+.theme-loader--fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+}
+
+.theme-loader--inline {
+  min-height: 12rem;
+  width: 100%;
+  border-radius: 0.75rem;
+}
+
+.theme-loader__orb {
+  position: relative;
+  width: 3.25rem;
+  height: 3.25rem;
+}
+
+.theme-loader__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  border-top-color: #0284c7;
+  border-right-color: #38bdf8;
+  animation: theme-loader-spin 0.75s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.theme-loader--dark .theme-loader__ring {
+  border-top-color: #38bdf8;
+  border-right-color: #7dd3fc;
+}
+
+.theme-loader__ring--inner {
+  inset: 0.45rem;
+  border-top-color: #0ea5e9;
+  border-right-color: #bae6fd;
+  animation-duration: 1s;
+  animation-direction: reverse;
+}
+
+.theme-loader__dot {
+  position: absolute;
+  inset: 1.15rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.45);
+  animation: theme-loader-pulse 1.15s ease-in-out infinite;
+}
+
+.theme-loader--dark .theme-loader__dot {
+  background: linear-gradient(135deg, #0ea5e9 0%, #7dd3fc 100%);
+  box-shadow: 0 0 22px rgba(125, 211, 252, 0.35);
+}
+
+@keyframes theme-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes theme-loader-pulse {
+  0%,
+  100% {
+    transform: scale(0.82);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Dark theme stepper arrows for PDF page input */
+.dark-number-input {
+  color-scheme: dark !important;
+  background-color: #202124 !important;
+  color: #ffffff !important;
+}
+
+.dark-number-input::-webkit-inner-spin-button,
+.dark-number-input::-webkit-outer-spin-button {
+  color-scheme: dark !important;
+  background-color: #202124 !important;
+  opacity: 0.85;
+}
+
+/* Custom Dark Scrollbar for Modal and PDF Viewer */
+.pdf-dark-scrollbar {
+  color-scheme: dark !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #64748b #0f172a !important;
+}
+
+.pdf-dark-scrollbar::-webkit-scrollbar {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+.pdf-dark-scrollbar::-webkit-scrollbar-track {
+  background: #0f172a !important;
+  border-radius: 6px !important;
+}
+
+.pdf-dark-scrollbar::-webkit-scrollbar-thumb {
+  background: #475569 !important;
+  border-radius: 6px !important;
+  border: 2px solid #0f172a !important;
+}
+
+.pdf-dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #64748b !important;
+}
+
+/* Fix default Tailwind 2.2.19 border color (#e5e7eb) in dark mode across the application */
+.dark .border,
+html.dark .border,
+.dark [class*="border-slate-"],
+.dark [class*="border-gray-"] {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.dark .border-t, html.dark .border-t { border-top-color: rgba(255, 255, 255, 0.12) !important; }
+.dark .border-b, html.dark .border-b { border-bottom-color: rgba(255, 255, 255, 0.12) !important; }
+.dark .border-l, html.dark .border-l { border-left-color: rgba(255, 255, 255, 0.12) !important; }
+.dark .border-r, html.dark .border-r { border-right-color: rgba(255, 255, 255, 0.12) !important; }
+
+/* Interactive Hover Effects for Activity Cards & List Items (Very Light Subtle Shadow, No Open-up / Pop-up) */
+.activity-item-hover {
+  position: relative;
+  cursor: pointer;
+  transform: none !important;
+  transition: box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.24s ease !important;
+}
+
+/* Light Mode: Base & Hover (Noticeable Depth Shadow) */
+html:not(.dark) .activity-item-hover {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.06), 0 1px 4px -1px rgba(0, 0, 0, 0.04) !important;
+}
+
+html:not(.dark) .activity-item-hover:hover {
+  transform: none !important;
+  border: 1px solid rgba(2, 132, 199, 0.32) !important;
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.12), 
+              0 4px 12px -2px rgba(2, 132, 199, 0.14) !important;
+}
+
+/* Dark Mode: Base & Hover (High-Contrast Shadow & Ambient Luminous Rim) */
+html.dark .activity-item-hover,
+.dark .activity-item-hover {
+  background-color: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .activity-item-hover:hover,
+.dark .activity-item-hover:hover {
+  transform: none !important;
+  background-color: #1e293b !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 14px 32px -4px rgba(0, 0, 0, 0.85), 
+              0 4px 14px -2px rgba(0, 0, 0, 0.6), 
+              0 0 20px 2px rgba(56, 189, 248, 0.22) !important;
+}
+
+/* Your Activities panel item hover in StudentFeedback (Ultra-Light & Very Thin Color Effect, No Open-up) */
+.faculty-activity-row {
+  transition: background-color 0.18s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+html:not(.dark) .faculty-activity-row:not(.is-selected):hover {
+  background-color: rgba(240, 249, 255, 0.45) !important;
+  border: 1px solid rgba(186, 230, 253, 0.35) !important;
+  border-left: 1px solid rgba(186, 230, 253, 0.35) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+html.dark .faculty-activity-row:not(.is-selected):hover,
+.dark .faculty-activity-row:not(.is-selected):hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Department Modal Custom Scrollbar (Light & Dark) */
+.dept-modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #0284c7 #f1f5f9;
+}
+
+/* Chrome, Edge, Safari, Brave */
+.dept-modal-scrollbar::-webkit-scrollbar {
+  width: 9px !important;
+  height: 9px !important;
+  display: block !important;
+}
+
+.dept-modal-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+  border-radius: 9999px !important;
+  margin: 8px 0 !important;
+}
+
+.dept-modal-scrollbar::-webkit-scrollbar-thumb {
+  background: #94a3b8 !important;
+  border-radius: 9999px !important;
+  border: 2px solid #f1f5f9 !important;
+  min-height: 48px !important;
+}
+
+.dept-modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #0284c7 !important;
+}
+
+/* Dark Mode Scrollbar */
+.dept-modal-scrollbar.dark-mode,
+.dark-mode.dept-modal-scrollbar,
+.dark .dept-modal-scrollbar,
+html.dark .dept-modal-scrollbar {
+  scrollbar-color: #38bdf8 #0f172a !important;
+}
+
+.dept-modal-scrollbar.dark-mode::-webkit-scrollbar-track,
+.dark-mode.dept-modal-scrollbar::-webkit-scrollbar-track,
+.dark .dept-modal-scrollbar::-webkit-scrollbar-track,
+html.dark .dept-modal-scrollbar::-webkit-scrollbar-track {
+  background: #0f172a !important;
+  border-radius: 9999px !important;
+  margin: 8px 0 !important;
+}
+
+.dept-modal-scrollbar.dark-mode::-webkit-scrollbar-thumb,
+.dark-mode.dept-modal-scrollbar::-webkit-scrollbar-thumb,
+.dark .dept-modal-scrollbar::-webkit-scrollbar-thumb,
+html.dark .dept-modal-scrollbar::-webkit-scrollbar-thumb {
+  background: #475569 !important;
+  border-radius: 9999px !important;
+  border: 2px solid #0f172a !important;
+  min-height: 48px !important;
+}
+
+.dept-modal-scrollbar.dark-mode::-webkit-scrollbar-thumb:hover,
+.dark-mode.dept-modal-scrollbar::-webkit-scrollbar-thumb:hover,
+.dark .dept-modal-scrollbar::-webkit-scrollbar-thumb:hover,
+html.dark .dept-modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #38bdf8 !important;
+}
+
+/* White Scrollbar for Signup and Modals */
+.afm-white-scroll {
+  scrollbar-width: thin !important;
+  scrollbar-color: #ffffff rgba(14, 165, 233, 0.08) !important;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+.afm-white-scroll::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+  display: block !important;
+}
+
+.afm-white-scroll::-webkit-scrollbar-track {
+  background: rgba(14, 165, 233, 0.05) !important;
+  border-radius: 9999px !important;
+  margin: 6px 0 !important;
+}
+
+.afm-white-scroll::-webkit-scrollbar-thumb {
+  background: #ffffff !important;
+  border-radius: 9999px !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.4) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16) !important;
+  cursor: pointer !important;
+}
+
+.afm-white-scroll::-webkit-scrollbar-thumb:hover {
+  background: #f8fafc !important;
+  border-color: rgba(100, 116, 139, 0.6) !important;
+}
+
+
 

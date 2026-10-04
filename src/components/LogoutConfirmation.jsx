@@ -13,7 +13,7 @@ const LogoutConfirmation = ({ isOpen, onClose, onConfirm, darkMode }) => {
       ></div>
 
       {/* Modal */}
-      <div className={`relative z-50 w-full max-w-md mx-4 p-6 rounded-lg shadow-xl ${
+      <div className={`relative z-50 w-full max-w-md mx-4 p-6 rounded-lg shadow-xl fast-scale-in ${
         darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'
       }`}>
         <div className="flex flex-col items-center">

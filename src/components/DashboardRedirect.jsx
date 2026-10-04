@@ -1,31 +1,27 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useUserSession } from '../UserSessionContext';
 
 const DashboardRedirect = () => {
   const { user, loading } = useUserSession();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading) {
-      if (user?.role === 'HOD') {
-        navigate('/hod-dashboard', { replace: true });
-      } else if (user?.role === 'Faculty') {
-        navigate('/faculty-dashboard', { replace: true });
-      } else if (user?.role === 'Student') {
-        navigate('/student-dashboard', { replace: true });
-      } else if (user) {
-        navigate('/', { replace: true });
-      }
-    }
-  }, [user, loading, navigate]);
+  if (!user) {
+    if (loading) return null;
+    return <Navigate to="/" replace />;
+  }
 
-  // Display a message while the redirection is happening.
-  return (
-    <div className="flex justify-center items-center h-screen">
-      <p>Redirecting to your dashboard...</p>
-    </div>
-  );
+  if (!user.isGoogleUser && !user.emailVerified) {
+    return <Navigate to="/" replace state={{ unverifiedEmail: user.email }} />;
+  }
+
+  const roleLower = (user.role || '').toLowerCase();
+  if (roleLower === 'hod') {
+    return <Navigate to="/hod-dashboard" replace />;
+  }
+  if (roleLower === 'faculty') {
+    return <Navigate to="/faculty-dashboard" replace />;
+  }
+  return <Navigate to="/student-dashboard" replace />;
 };
 
-export default DashboardRedirect; 
+export default DashboardRedirect;

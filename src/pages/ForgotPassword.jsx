@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { app } from "../firebaseConfig";
+import { validateCollegeEmail } from "../utils/emailValidation";
+import Toast from "../components/Toast";
+import { getActionCodeSettings } from "../utils/authConfig";
 
 const auth = getAuth(app);
 
 const ForgotPassword = ({ onClose, toggleLogin }) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: "", type: "error" });
+
+  const showToast = (message, type = "error") => {
+    setToast({ show: true, message, type });
+  };
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 40);
@@ -17,22 +25,52 @@ const ForgotPassword = ({ onClose, toggleLogin }) => {
   }, []);
 
   const handleResetPassword = async () => {
-    if (!email) {
-      setError("Please enter your email address");
+    if (!email || !email.trim()) {
+      showToast("Please enter your email address");
+      return;
+    }
+
+    const emailCheck = validateCollegeEmail(email);
+    if (!emailCheck.isValid) {
+      showToast(emailCheck.error);
       return;
     }
 
     setLoading(true);
-    setError("");
 
     try {
-      await sendPasswordResetEmail(auth, email);
-      setMessage("Password reset link has been sent to your email");
-      toggleLogin(); // Go back to login page
+      const actionCodeSettings = getActionCodeSettings('/reset-password');
+      try {
+        await sendPasswordResetEmail(auth, email.trim(), actionCodeSettings);
+      } catch (actErr) {
+        console.warn("Failed with actionCodeSettings, falling back to standard:", actErr);
+        await sendPasswordResetEmail(auth, email.trim());
+      }
+      showToast("Password reset link has been sent to your email!", "success");
+      setTimeout(() => {
+        if (toggleLogin) {
+          toggleLogin(); // Go back to login modal
+        } else {
+          navigate("/");
+        }
+      }, 2000);
     } catch (error) {
-      setError(error.message);
+      console.error("Forgot password error:", error);
+      if (error.code === 'auth/user-not-found') {
+        showToast("No account found with this email address.");
+      } else {
+        showToast(error.message || "Failed to send reset email. Please try again.");
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    if (toggleLogin) {
+      toggleLogin();
+    } else {
+      navigate("/");
     }
   };
 
@@ -109,24 +147,19 @@ const ForgotPassword = ({ onClose, toggleLogin }) => {
         }
       `}</style>
 
-      {error && (
-        <div className="afm-error bg-red-50/80 backdrop-blur-sm text-red-700 p-3 rounded-xl mb-4 text-sm border border-red-200/70 w-full">
-          {error}
-        </div>
-      )}
-      {message && (
-        <div className="afm-success bg-emerald-50/80 backdrop-blur-sm text-emerald-700 p-3 rounded-xl mb-4 text-sm border border-emerald-200/70 w-full">
-          {message}
-        </div>
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ show: false, message: "", type: "error" })}
+        />
       )}
 
-      {!message && (
-        <p className="afm-field d1 text-sky-800/70 text-sm text-center mb-6">
-          Enter your email and we'll send you a link to get back into your account.
-        </p>
-      )}
+      <p className="afm-field d1 text-sky-800/70 text-sm text-center mb-6">
+        Enter your email and we'll send you a link to get back into your account.
+      </p>
 
-      <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleResetPassword(); }}>
+      <form noValidate className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleResetPassword(); }}>
         <div className="afm-field d2">
           <label className="block text-sky-800 text-sm font-semibold mb-1.5">Email Address</label>
           <input
@@ -135,15 +168,14 @@ const ForgotPassword = ({ onClose, toggleLogin }) => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="afm-input w-full rounded-xl px-4 py-2.5 text-sky-900 placeholder-sky-400"
-            required
-            disabled={!!message}
+            disabled={loading}
           />
         </div>
         <div className="afm-field d3 pt-1">
           <button
             type="submit"
-            disabled={loading || !!message}
-            className="afm-btn-primary w-full text-white font-semibold py-2.5 rounded-xl"
+            disabled={loading}
+            className="afm-btn-primary w-full text-white font-semibold py-2.5 rounded-xl cursor-pointer"
           >
             {loading ? "Sending Link..." : "Send Reset Link"}
           </button>
@@ -152,7 +184,7 @@ const ForgotPassword = ({ onClose, toggleLogin }) => {
 
       <div className="afm-field d3 mt-6 text-center">
         <span
-          onClick={toggleLogin}
+          onClick={handleBackToLogin}
           className="afm-link text-sky-600 hover:text-sky-700 cursor-pointer font-semibold text-sm"
         >
           Back to Login

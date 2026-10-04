@@ -15,6 +15,10 @@ const LogoutHandler = () => {
         localStorage.removeItem('userToken');
         localStorage.removeItem('userData');
         localStorage.removeItem('userId');
+        sessionStorage.removeItem('itfs_student_academic_year_filter');
+        sessionStorage.removeItem('itfs_student_class_name_filter');
+        sessionStorage.removeItem('itfs_student_filter_is_manual');
+        sessionStorage.removeItem('itfs_student_filter_uid');
       } catch (error) {
         console.error("Logout failed:", error);
       }

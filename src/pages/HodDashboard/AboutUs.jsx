@@ -7,7 +7,7 @@ import { getDarkModeFromStorage, setDarkModeInStorage } from '../FacultyDashboar
 
 const HodAboutUs = () => {
   const [darkMode, setDarkMode] = useState(getDarkModeFromStorage());
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => { try { return JSON.parse(sessionStorage.getItem('sidebarOpen')) || false; } catch { return false; } });
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -78,7 +78,7 @@ const HodAboutUs = () => {
         <main className={`flex-1 overflow-x-hidden overflow-y-auto transition-all duration-300 ease-in-out ${
           sidebarOpen ? 'ml-64' : 'ml-16'
         }`}>
-          <div className="p-6 pt-20">
+          <div className="p-6 pt-20 page-smooth-enter">
             <div className="px-6">
               {/* About Section */}
               <section className="mb-16">

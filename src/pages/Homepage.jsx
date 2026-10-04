@@ -4,14 +4,16 @@ import LoginPage from "./LoginPage";
 import SignupPage from "./Signup";
 import Abouthome from "./Abouthome";
 import ForgotPassword from "./ForgotPassword";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export default function HomePage() {
+  const location = useLocation();
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [activeNav, setActiveNav] = useState('');
 
   useEffect(() => {
     const hasSeenInstructions = localStorage.getItem("hasSeenInstructions");
@@ -19,10 +21,21 @@ export default function HomePage() {
       setShowInstructions(true);
       localStorage.setItem("hasSeenInstructions", "true");
     }
-    // trigger the one-time entrance sequence on mount
-    const t = setTimeout(() => setMounted(true), 50);
+    // trigger the one-time entrance sequence on mount without delay
+    const t = setTimeout(() => setMounted(true), 20);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    // If redirected with openLogin request (via state or ?openLogin=true query parameter)
+    const params = new URLSearchParams(location.search);
+    const shouldOpenLogin = location.state?.openLogin || params.get('openLogin') === 'true';
+    if (shouldOpenLogin) {
+      setShowLogin(true);
+      setShowSignup(false);
+      setShowForgotPassword(false);
+    }
+  }, [location.state, location.search]);
 
   const openLogin = () => {
     setShowLogin(true);
@@ -50,7 +63,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative w-full min-h-screen overflow-x-hidden itf-page">
+    <div className="relative w-full min-h-screen itf-page" style={{ overflow: 'visible' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
@@ -61,6 +74,7 @@ export default function HomePage() {
             radial-gradient(900px 500px at -10% 20%, #e6f7ff 0%, transparent 55%),
             linear-gradient(180deg, #f5fbff 0%, #eef9ff 40%, #f7fcff 100%);
           color: #124559;
+          overflow: visible !important;
         }
         .itf-heading {
           font-family: 'Outfit', 'Inter', system-ui, sans-serif;
@@ -106,7 +120,7 @@ export default function HomePage() {
           animation: itf-modal-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
         @keyframes itf-modal-in {
-          0% { opacity: 0; transform: scale(0.94) translateY(10px); }
+          0% { opacity: 0; transform: scale(0.95) translateY(28px); }
           100% { opacity: 1; transform: scale(1) translateY(0); }
         }
         .itf-modal-strip {
@@ -146,30 +160,84 @@ export default function HomePage() {
           color: transparent;
         }
 
-        /* one orchestrated entrance sequence for the hero, not scattered per-section reveals */
+        .itf-nav-link {
+          position: relative;
+          color: #0B1F3A;
+          font-weight: 500;
+          padding: 4px 2px;
+          display: inline-block;
+          text-decoration: none;
+          cursor: pointer;
+          transition: color 0.35s ease;
+        }
+        .itf-nav-link::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          bottom: -3px;
+          width: 0;
+          height: 2.5px;
+          border-radius: 9999px;
+          background: linear-gradient(90deg, #0284c7, #38bdf8);
+          box-shadow: 0 1px 5px rgba(2, 132, 199, 0.35);
+          transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .itf-nav-link:hover {
+          color: #0284c7 !important;
+        }
+        .itf-nav-link:hover::after {
+          width: 100%;
+        }
+        .itf-nav-link:active,
+        .itf-nav-link.active {
+          color: #031d33 !important;
+          font-weight: 700 !important;
+        }
+        .itf-nav-link:active::after,
+        .itf-nav-link.active::after {
+          width: 100% !important;
+          background: linear-gradient(90deg, #075985, #0284c7) !important;
+        }
+
+        /* Smooth, slow orchestrated entrance sequence for homepage without double scrollbar */
+        .itf-home-enter {
+          animation: itfHomeEnter 0.5s ease-out both;
+          will-change: opacity;
+        }
+        @keyframes itfHomeEnter {
+          0% {
+            opacity: 0;
+          }
+          100% {
+            opacity: 1;
+          }
+        }
+
         .itf-reveal {
           opacity: 0;
-          transform: translateY(16px);
-          transition: opacity 0.7s ease, transform 0.7s ease;
+          transform: translateY(12px);
+          transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+          will-change: transform, opacity;
         }
         .itf-mounted .itf-reveal { opacity: 1; transform: translateY(0); }
-        .itf-reveal.d1 { transition-delay: 0.05s; }
-        .itf-reveal.d2 { transition-delay: 0.18s; }
-        .itf-reveal.d3 { transition-delay: 0.32s; }
-        .itf-reveal.d4 { transition-delay: 0.46s; }
+        .itf-reveal.d1 { transition-delay: 0.08s; }
+        .itf-reveal.d2 { transition-delay: 0.16s; }
+        .itf-reveal.d3 { transition-delay: 0.24s; }
+        .itf-reveal.d4 { transition-delay: 0.32s; }
 
         @media (prefers-reduced-motion: reduce) {
           .itf-orb { animation: none !important; }
+          .itf-home-enter { animation: none !important; opacity: 1 !important; transform: none !important; }
           .itf-reveal { transition: none !important; opacity: 1 !important; transform: none !important; }
           .itf-modal { animation: none !important; }
         }
       `}</style>
 
-      <div className={mounted ? "itf-mounted" : ""}>
+      <div className={mounted ? "itf-mounted" : ""} style={{ overflow: 'visible' }}>
         {/* College Header Banner */}
         <div className="relative z-10 w-full py-4 border-b border-sky-100/70">
           <div className="container mx-auto max-w-screen-lg flex flex-col md:flex-row items-center justify-center px-4 text-center">
-            <img src="/5.png" alt="KBTCOE Logo" className="h-16 w-24 mx-7 mb-6 md:mb-0" />
+            <img src="/5.png" alt="KBTCOE Logo" className="h-20 w-24 mx-7 mb-6 md:mb-0 object-contain shrink-0" loading="eager" decoding="async" fetchpriority="high" width="96" height="64" />
             <div className="text-center flex-1 w-full">
               <h2 className="itf-heading text-sky-700 font-semibold text-lg md:text-xl">
                 Maratha Vidya Prasarak Samaj's
@@ -191,32 +259,91 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Floating glass navbar */}
-        <nav className="itf-navbar sticky top-4 z-20 mx-4 md:mx-8 mt-4 rounded-2xl flex justify-between items-center px-5 py-3">
-          <h1 className="itf-heading text-xl md:text-2xl font-bold">
-            <span className="text-sky-700">Innovative Teaching Feedback</span>
-          </h1>
-          <div className="space-x-5 flex items-center">
-            <a href="#features" className="text-sky-700 hover:text-sky-500 text-sm md:text-base transition-colors">
-              Features
-            </a>
-            <a href="#benefits" className="text-sky-700 hover:text-sky-500 text-sm md:text-base transition-colors">
-              Benefits
-            </a>
-            <Link to="/abouthome" className="text-sky-700 hover:text-sky-500 text-sm md:text-base transition-colors">
-              About Us
-            </Link>
-            <button
-              className="itf-btn-primary text-white px-4 py-2 text-sm md:text-base rounded-xl font-medium"
-              onClick={openSignup}
+      {/* Floating glass navbar */}
+      <nav className="itf-navbar relative z-20 mx-4 md:mx-8 mt-4 rounded-2xl flex justify-between items-center px-5 py-3">
+        <div className="flex items-center">
+          <h1
+            className="group inline-flex flex-wrap items-center gap-x-1 text-lg sm:text-base md:text-xl lg:text-2xl font-extrabold tracking-tight focus:outline-none"
+            style={{
+              fontFamily: "'Outfit', 'Inter', system-ui, sans-serif",
+              lineHeight: 1.2,
+              textShadow: "0 1px 2px rgba(7, 89, 133, 0.15)",
+            }}
+          >
+            <span className="text-[#075985] transition-all duration-300 group-hover:drop-shadow-[0_0_4px_rgba(7,89,133,0.35)]">
+              Innovative
+            </span>
+
+            <span
+              className="relative text-[#0284c7] transition-all duration-300 group-hover:drop-shadow-[0_0_5px_rgba(2,132,199,0.45)]
+                         after:absolute after:left-0 after:-bottom-1
+                         after:h-[2px] after:w-0 after:rounded-full
+                         after:bg-gradient-to-r after:from-[#075985] after:to-[#0284c7]
+                         after:transition-all after:duration-300
+                         group-hover:after:w-full"
             >
-              Sign Up
-            </button>
-          </div>
+              Teaching
+            </span>
+
+            <span className="text-[#075985] transition-all duration-300 group-hover:drop-shadow-[0_0_4px_rgba(7,89,133,0.35)]">
+              Feedback
+            </span>
+          </h1>
+        </div>
+        <div className="space-x-6 flex items-center">
+          <a
+            href="#features"
+            onClick={() => setActiveNav('features')}
+            className={`itf-nav-link text-sm md:text-base cursor-pointer ${
+              activeNav === 'features' ? 'active font-bold !text-[#031d33]' : ''
+            }`}
+          >
+            Features
+          </a>
+
+          <a
+            href="#benefits"
+            onClick={() => setActiveNav('benefits')}
+            className={`itf-nav-link text-sm md:text-base cursor-pointer ${
+              activeNav === 'benefits' ? 'active font-bold !text-[#031d33]' : ''
+            }`}
+          >
+            Benefits
+          </a>
+
+          <Link
+            to="/abouthome"
+            onClick={() => setActiveNav('about')}
+            className={`itf-nav-link text-sm md:text-base cursor-pointer ${
+              activeNav === 'about' ? 'active font-bold !text-[#031d33]' : ''
+            }`}
+          >
+            About Us
+          </Link>
+
+          <Link
+            to="/contacthome"
+            onClick={() => setActiveNav('contact')}
+            className={`itf-nav-link text-sm md:text-base cursor-pointer ${
+              activeNav === 'contact' ? 'active font-bold !text-[#031d33]' : ''
+            }`}
+          >
+            Contact Us
+          </Link>
+
+          <button
+            className="itf-btn-primary text-white px-4 py-2 text-sm md:text-base rounded-xl font-medium cursor-pointer"
+            onClick={openSignup}
+          >
+            Sign Up
+          </button>
+        </div>
         </nav>
 
-        {/* Hero */}
-        <section className="relative flex flex-col md:flex-row items-center justify-between px-6 md:px-12 py-20 min-h-[80vh] w-full overflow-hidden">
+        {/* Content Below Navbar with Smooth Animation */}
+        <div className="itf-home-enter">
+          {/* Hero */}
+          <section className="relative flex flex-col md:flex-row items-center justify-between px-6 md:px-12 py-20 min-h-[80vh] w-full overflow-hidden">
           <div className="itf-orb itf-orb--a" />
           <div className="itf-orb itf-orb--b" />
 
@@ -229,7 +356,7 @@ export default function HomePage() {
               A seamless platform for faculty and students to engage in meaningful feedback, driving educational excellence at KBTCOE.
             </p>
             <button
-              className="itf-reveal d3 itf-btn-primary mt-8 text-white px-8 py-3 text-lg rounded-xl font-medium"
+              className="itf-reveal d3 itf-btn-primary mt-8 text-white px-8 py-3 text-lg rounded-xl font-medium cursor-pointer"
               onClick={openSignup}
             >
               Get Started
@@ -309,17 +436,18 @@ export default function HomePage() {
         <footer className="relative z-10 w-full itf-glass border-t-0 rounded-t-3xl mt-8 text-center py-6">
           <p className="text-lg text-sky-800">Innovative Teaching Feedback © 2025. All rights reserved.</p>
         </footer>
+        </div>
       </div>
 
       {(showLogin || showSignup || showForgotPassword) && (
         <div
-          className="fixed inset-0 bg-sky-950/60 backdrop-blur-md z-50 flex items-center justify-center"
+          className="fixed inset-0 bg-sky-950/60 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-3 md:p-4 overflow-y-auto"
           onClick={closeModals}
         >
           {showLogin && (
             <div
-              className="itf-modal rounded-2xl w-full max-w-4xl mx-4 overflow-hidden flex flex-col"
-              style={{ width: "900px", height: "560px" }}
+              className="itf-modal rounded-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-auto"
+              style={{ width: "900px", height: "560px", maxHeight: "calc(100vh - 2rem)" }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="itf-modal-strip" />
@@ -351,8 +479,8 @@ export default function HomePage() {
 
           {showSignup && (
             <div
-              className="itf-modal rounded-2xl w-full max-w-4xl mx-4 overflow-hidden flex flex-col"
-              style={{ width: "900px", height: "640px" }}
+              className="itf-modal rounded-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-auto"
+              style={{ width: "900px", height: "600px", maxHeight: "calc(100vh - 1.5rem)" }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="itf-modal-strip" />
@@ -365,18 +493,20 @@ export default function HomePage() {
                     <p className="text-white/80 text-sm mt-1">Be part of a transparent feedback community.</p>
                   </div>
                 </div>
-                <div className="w-full md:w-1/2 p-5 flex flex-col justify-center h-full overflow-hidden">
-                  <div className="flex items-start justify-between mb-3">
+                <div className="w-full md:w-1/2 pl-4 pt-3.5 pb-2.5 pr-1.5 md:pl-5 md:pt-4 md:pb-3 md:pr-2 flex flex-col h-full min-h-0 bg-white">
+                  <div className="flex items-start justify-between mb-8 shrink-0 pr-2.5 md:pr-3">
                     <div className="flex items-center gap-3">
-                       <img src="/5.png" alt="KBTCOE Logo" className="w-12 h-13  bg-white   object-contain p-1 flex-shrink-0" />
+                       <img src="/5.png" alt="KBTCOE Logo" className="w-11 h-11 bg-white object-contain p-1 flex-shrink-0" />
                       <div>
-                        <h2 className="itf-heading text-2xl font-bold text-sky-900 leading-tight">Create Account</h2>
+                        <h2 className="itf-heading text-xl md:text-2xl font-bold text-sky-900 leading-tight">Create Account</h2>
                         <p className="text-sky-600 text-xs mt-0.5">Sign up with your organization email</p>
                       </div>
                     </div>
-                    <button onClick={closeModals} className="text-sky-400 hover:text-sky-700 text-xl bg-transparent leading-none transition-colors">×</button>
+                    <button onClick={closeModals} className="text-sky-400 hover:text-sky-700 text-xl bg-transparent leading-none transition-colors cursor-pointer">×</button>
                   </div>
-                  <SignupPage onClose={closeModals} toggleLogin={openLogin} />
+                  <div className="flex-1 min-h-0 overflow-y-auto afm-white-scroll pr-2 md:pr-3">
+                    <SignupPage onClose={closeModals} toggleLogin={openLogin} />
+                  </div>
                 </div>
               </div>
             </div>

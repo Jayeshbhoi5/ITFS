@@ -1,9 +1,8 @@
 import React from 'react';
+import ThemeLoader from './ThemeLoader';
 
-const Spinner = () => (
-  <div className="flex justify-center items-center">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-  </div>
+const Spinner = ({ darkMode }) => (
+  <ThemeLoader fullScreen={false} darkMode={darkMode} className="py-8" />
 );
 
-export default Spinner; 
+export default Spinner;

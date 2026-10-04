@@ -5,28 +5,31 @@ import StudentSidebar from './StudentSidebar';
 import { Link } from 'react-router-dom';
 import { useUserSession } from '../../UserSessionContext';
 import DepartmentSelectionModal from '../../components/DepartmentSelectionModal';
+import Toast from '../../components/Toast';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+import {
+  getDarkModeFromStorage,
+  setDarkModeInStorage,
+} from './darkModeUtils';
 
 const StudentAboutUs = () => {
-  // Initialize dark mode state safely
-  const [darkMode, setDarkMode] = useState(() => {
+  console.log('✅ STUDENT ABOUT US FILE IS RENDERING');
+
+  const [darkMode, setDarkMode] = useState(() => getDarkModeFromStorage());
+
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
     try {
-      if (typeof window !== 'undefined') {
-        const savedMode = localStorage.getItem('darkMode');
-        if (savedMode === null) return false;
-        return JSON.parse(savedMode);
-      }
-    } catch (e) {
-      console.error("Error parsing darkMode from localStorage:", e);
-      localStorage.removeItem('darkMode'); // Clean up invalid value
+      return JSON.parse(sessionStorage.getItem('sidebarOpen')) || false;
+    } catch {
+      return false;
     }
-    return false;
   });
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showDeptModal, setShowDeptModal] = useState(false);
-  const [deptEditMode, setDeptEditMode] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [mounted] = useState(true);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -39,27 +42,63 @@ const StudentAboutUs = () => {
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
-    try {
-      localStorage.setItem('darkMode', JSON.stringify(newMode));
-    } catch (e) {
-      console.error("Error saving darkMode to localStorage:", e);
-    }
+    setDarkModeInStorage(newMode);
   };
 
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
+    const onStorage = (e) => {
+      if (e.key === 'darkMode') {
+        setDarkMode(e.newValue === 'enabled');
+      }
+    };
 
-  useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(t);
+    window.addEventListener('storage', onStorage);
+
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  const { user } = useUserSession();
+  const { user, setUser } = useUserSession();
+
+  const handleEditDepartment = () => {
+    setShowDeptModal(true);
+  };
+
+  const handleDepartmentSubmit = async (data) => {
+    if (!user) return;
+    const userRef = doc(db, 'users', user.uid);
+    const activeAy = data.academicYear || getCurrentAcademicYear();
+    const newChangeCount = (user.departmentChangeCount || 0) + 1;
+
+    // Close modal instantly with ZERO delay & show toast immediately
+    setShowDeptModal(false);
+    setToast({ show: true, message: 'Department updated successfully!', type: 'success' });
+
+    if (setUser) {
+      setUser({
+        ...user,
+        departments: data.departments,
+        year: data.year,
+        academicYear: activeAy,
+        baseYear: data.year,
+        yearSelectedAt: data.yearSelectedAt,
+        departmentChangeCount: newChangeCount,
+      });
+    }
+
+    try {
+      await updateDoc(userRef, {
+        departments: data.departments,
+        year: data.year,
+        academicYear: activeAy,
+        baseYear: data.year,
+        yearSelectedAt: data.yearSelectedAt,
+        departmentChangeCount: newChangeCount,
+      });
+    } catch (err) {
+      console.error('Error updating department in Firestore:', err);
+      setToast({ show: true, message: 'Failed to update department.', type: 'error' });
+    }
+  };
 
   const teamMembers = [
     {
@@ -68,23 +107,23 @@ const StudentAboutUs = () => {
       role: 'Roll no: 59',
       image: '/aaryas.jpg',
       email: 'aaryashewale03@gmail.com',
-      phone: '+91 7588095796'
-    },      
+      phone: '+91 7588095796',
+    },
     {
       name: 'Aarya Thombare',
       bio: 'Contributed to the development of user interface and project documentation.',
       role: 'Roll no: 68',
       image: '/aaryat.png',
       email: 'aaryaathombre754@gmail.com',
-      phone: '+91 9356837438'
+      phone: '+91 9356837438',
     },
     {
       name: 'Jayesh Bhoi',
-      bio: 'Contributed to developing and implementing feedback mechanisms and system solutions.',
+      bio: 'Contributed to developing & implementing feedback mechanisms & system solutions.',
       role: 'Roll no: 10',
       image: '/jayesh4.png',
       email: 'jayeshb249@gmail.com',
-      phone: '+91 8208550878'
+      phone: '+91 8208550878',
     },
     {
       name: 'Udaysingh Jagtap',
@@ -92,207 +131,335 @@ const StudentAboutUs = () => {
       role: 'Roll no: 27',
       image: '/uday1.png',
       email: 'Udayjagtap8684@gmail.com',
-      phone: '+91 8010098286'
-    }
+      phone: '+91 8010098286',
+    },
   ];
 
-  const handleEditDepartment = () => {
-    if (user && (user.role === 'Faculty' || user.role === 'Student')) {
-      setShowDeptModal(true);
-      setDeptEditMode(true);
-    }
-  };
-
   return (
-    <div className={`relative w-full min-h-screen itf-about ${darkMode ? 'itf-about-dark' : 'itf-about-light'}`}>
+    <div
+      className={`student-about-page min-h-screen transition-colors duration-300 ${
+        darkMode
+          ? 'bg-gray-900 text-gray-100'
+          : 'bg-white text-gray-800'
+      }`}
+    >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap');
-
-        .itf-about { font-family: 'Inter', system-ui, sans-serif; }
-        .itf-about-heading { font-family: 'Outfit', 'Inter', system-ui, sans-serif; letter-spacing: -0.01em; }
-        .itf-about-ink { color: #0f172a; }
-        .itf-about-dark .itf-about-ink { color: #f8fafc; }
-
-        .itf-about-light {
-          background-color: #f8fafc;
-          color: #334155;
-        }
-        .itf-about-dark {
-          background-color: #111827;
-          color: #e2e8f0;
+        .student-about-page {
+          --student-about-teal: #10465a;
+          --student-about-cyan: #28b8f0;
+          --student-about-blue: #2563eb;
         }
 
-        .itf-about-glass {
-          border-radius: 1.25rem;
-          transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        .student-about-heading {
+          color: var(--student-about-teal);
         }
-        .itf-about-light .itf-about-glass {
+
+        .student-about-accent {
+          color: var(--student-about-cyan);
+        }
+
+        .student-about-icon {
+          color: var(--student-about-blue);
+          flex-shrink: 0;
+        }
+
+        .student-about-panel {
           background: #ffffff;
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-        }
-        .itf-about-dark .itf-about-glass {
-          background: #1f2937;
-          border: 1px solid #374151;
-          box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
-        }
-        .itf-about-card:hover { transform: translateY(-3px); }
-        .itf-about-light .itf-about-card:hover { background: #ffffff; box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.08); }
-        .itf-about-dark .itf-about-card:hover { background: #1f2937; box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.45); }
-
-        .itf-about-accent { color: #0284c7; }
-        .itf-about-dark .itf-about-accent { color: #38bdf8; }
-        .itf-about-gradient-text {
-          background: linear-gradient(120deg, #0284c7, #0369a1);
-          -webkit-background-clip: text; background-clip: text; color: transparent;
+          border: 1px solid #dbeafe;
+          border-radius: 1rem;
+          box-shadow: 0 4px 16px rgba(16, 70, 90, 0.045);
         }
 
-        .itf-about-avatar-ring {
-          padding: 3px;
-          background: linear-gradient(135deg, #0284c7, #075985);
+        .student-about-card {
+          min-width: 0;
+          background: #ffffff;
+          border: 1px solid #dbeafe;
+          border-radius: 1rem;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .student-about-card:hover {
+          border-color: #93dafa;
+          box-shadow: 0 6px 18px rgba(16, 70, 90, 0.08);
+        }
+
+        .student-about-avatar-ring {
+          padding: 4px;
+          border: 2px solid #28b8f0;
           border-radius: 9999px;
         }
 
-        .itf-about-reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.6s ease, transform 0.6s ease; }
-        .itf-about-mounted .itf-about-reveal { opacity: 1; transform: translateY(0); }
-        .itf-about-reveal.d1 { transition-delay: 0.05s; }
-        .itf-about-reveal.d2 { transition-delay: 0.15s; }
-        .itf-about-reveal.d3 { transition-delay: 0.25s; }
+        .student-about-email-row {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.4rem;
+          width: 100%;
+          min-width: 0;
+        }
 
-        @media (prefers-reduced-motion: reduce) {
-          .itf-about-reveal { transition: none !important; opacity: 1 !important; transform: none !important; }
+        .student-about-email {
+          white-space: nowrap;
+          font-size: 12px;
+          line-height: 1.5;
+          color: #1d4ed8;
+          text-decoration: none;
+        }
+
+        .student-about-email:hover {
+          text-decoration: underline;
+        }
+
+        .student-about-guide {
+          background: #ffffff;
+          border: 1px solid #dbeafe;
+          border-left: 4px solid #28b8f0;
+          border-right: 4px solid #28b8f0;
+          border-radius: 1rem;
+          box-shadow: 0 4px 16px rgba(16, 70, 90, 0.045);
+        }
+
+        .student-about-dark .student-about-heading {
+          color: #7dd3fc;
+        }
+
+        .student-about-dark .student-about-panel,
+        .student-about-dark .student-about-card,
+        .student-about-dark .student-about-guide {
+          background: #1f2937;
+          border-color: #374151;
+        }
+
+        .student-about-dark .student-about-card:hover {
+          border-color: #38bdf8;
+        }
+
+        .student-about-dark .student-about-email {
+          color: #93c5fd;
+        }
+
+        .student-about-dark .student-about-guide {
+          border-left-color: #28b8f0;
+          border-right-color: #28b8f0;
+        }
+
+        @media (max-width: 640px) {
+          .student-about-email {
+            font-size: 11px;
+          }
         }
       `}</style>
 
       {/* Department Selection Modal */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          darkMode={darkMode}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
       <DepartmentSelectionModal
         isOpen={showDeptModal}
         onClose={() => setShowDeptModal(false)}
-        onSubmit={() => setShowDeptModal(false)}
-        userType={'student'}
+        onSubmit={handleDepartmentSubmit}
+        userType="student"
         currentDepartments={user?.departments || []}
-        canEdit={true}
+        currentPrimaryDepartment={user?.primaryDepartment || user?.departments?.[0] || ''}
+        canEdit={(user?.departmentChangeCount || 0) < 1}
+        darkMode={darkMode}
       />
 
-      {/* Sticky Navbar */}
-      <div className={`fixed top-0 left-0 right-0 z-50 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-        <Navbar 
-          darkMode={darkMode} 
-          setDarkMode={setDarkMode}
-          toggleSidebar={toggleSidebar}
-          showProfileMenu={showProfileMenu}
-          toggleProfileMenu={toggleProfileMenu}
-          sidebarOpen={sidebarOpen}
-          user={user}
-          onEditDepartment={handleEditDepartment}
-        />
-      </div>
+      {/* Navbar */}
+      <Navbar
+        darkMode={darkMode}
+        toggleSidebar={toggleSidebar}
+        showProfileMenu={showProfileMenu}
+        toggleProfileMenu={toggleProfileMenu}
+        sidebarOpen={sidebarOpen}
+        user={user}
+        onEditDepartment={handleEditDepartment}
+      />
 
-      <div className="flex pt-16">
-        {/* Sidebar with dark mode toggle */}
-        <StudentSidebar 
-          darkMode={darkMode} 
+      <div className="flex">
+        {/* Student Sidebar */}
+        <StudentSidebar
+          darkMode={darkMode}
           sidebarOpen={sidebarOpen}
           toggleSidebar={toggleSidebar}
           toggleDarkMode={toggleDarkMode}
           user={user}
         />
 
-        {/* Main content area with seamless transition */}
-        <div className={`flex-1 transition-all duration-300 relative z-10 ${sidebarOpen ? 'ml-64' : 'ml-16'} ${mounted ? 'itf-about-mounted' : ''}`}>
-
-          <div className="p-8 relative z-10">
-            <div className="max-w-6xl mx-auto">
+        {/* Main Content */}
+        <div
+          className={`flex-1 min-h-screen transition-all duration-300 page-smooth-enter ${
+            sidebarOpen ? 'ml-64' : 'ml-16'
+          } ${darkMode ? 'bg-gray-900' : 'bg-white'}`}
+        >
+          <div className="p-4 sm:p-6 lg:p-8 relative z-10">
+            <div
+              className={`max-w-7xl mx-auto ${
+                darkMode ? 'student-about-dark' : ''
+              }`}
+            >
               {/* About Section */}
-              <section className="mb-12 itf-about-reveal d1">
-                <h1 className="itf-about-heading itf-about-ink text-4xl font-bold mb-6">About Us</h1>
-                <div className="itf-about-glass p-6">
+              <section className="mb-12">
+                <h1 className="student-about-heading text-4xl font-bold mb-6">
+                  About Us
+                </h1>
+
+                <div className="student-about-panel p-6">
                   <p className="text-lg mb-4">
-                    Welcome to Innovative Teaching Feedback, a platform designed to enhance the teaching-learning experience through effective feedback mechanisms.
+                    Welcome to Innovative Teaching Feedback, a platform
+                    designed to enhance the teaching-learning experience
+                    through effective feedback mechanisms.
                   </p>
+
                   <p className="text-lg mb-4">
-                    Our mission is to bridge the gap between students and faculty by providing a seamless feedback system that helps improve teaching methodologies and student engagement.
+                    Our mission is to bridge the gap between students and
+                    faculty by providing a seamless feedback system that
+                    helps improve teaching methodologies and student
+                    engagement.
                   </p>
+
                   <p className="text-lg">
-                    We believe in the power of constructive feedback and its role in creating a better educational environment for everyone involved.
+                    We believe in the power of constructive feedback and its
+                    role in creating a better educational environment for
+                    everyone involved.
                   </p>
                 </div>
               </section>
 
               {/* Mission & Vision */}
-              <div className="itf-about-glass p-8 mb-10 itf-about-reveal d2">
-                <h3 className="itf-about-heading itf-about-ink text-2xl font-bold mb-6">Our Mission & Vision</h3>
+              <section className="student-about-panel p-6 sm:p-8 mb-10">
+                <h3 className="student-about-heading text-2xl font-bold mb-6">
+                  Our Mission &amp; Vision
+                </h3>
+
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div className="itf-about-glass itf-about-card p-6">
-                    <h4 className="itf-about-heading text-xl font-semibold mb-3 itf-about-accent">Mission</h4>
+                  <div className="student-about-card p-6">
+                    <h4 className="text-xl font-semibold mb-3">
+                      <span className="student-about-accent">
+                        Mission
+                      </span>
+                    </h4>
+
                     <p className="opacity-80">
-                      To create a responsive educational ecosystem where timely feedback leads to measurable improvements in teaching methodologies and learning outcomes for all students at KBTCOE.
+                      To create a responsive educational ecosystem where
+                      timely feedback leads to measurable improvements in
+                      teaching methodologies and learning outcomes for all
+                      students at KBTCOE.
                     </p>
                   </div>
-                  <div className="itf-about-glass itf-about-card p-6">
-                    <h4 className="itf-about-heading text-xl font-semibold mb-3 itf-about-accent">Vision</h4>
+
+                  <div className="student-about-card p-6">
+                    <h4 className="text-xl font-semibold mb-3">
+                      <span className="student-about-accent">
+                        Vision
+                      </span>
+                    </h4>
+
                     <p className="opacity-80">
-                      To establish KBTCOE as a pioneering institute where continuous feedback and improvement become the foundation of educational excellence and student success.
+                      To establish KBTCOE as a pioneering institute where
+                      continuous feedback and improvement become the
+                      foundation of educational excellence and student
+                      success.
                     </p>
                   </div>
                 </div>
-              </div>
+              </section>
 
               {/* Team Section */}
-              <div className="itf-about-glass p-8 mb-10 itf-about-reveal d3">
-                <h3 className="itf-about-heading itf-about-ink text-2xl font-bold mb-8">Our Team</h3>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <section className="student-about-panel p-5 sm:p-8 mb-10">
+                <h3 className="student-about-heading text-2xl font-bold mb-8">
+                  Our Team
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                   {teamMembers.map((member, index) => (
-                    <div key={index} className="itf-about-glass itf-about-card text-center p-6">
-                      <div className="flex flex-col items-center">
-                        <div className="itf-about-avatar-ring mb-4">
-                          <div className="w-36 h-36 rounded-full overflow-hidden aspect-square bg-white/40">
+                    <div
+                      key={index}
+                      className="student-about-card text-center p-4 sm:p-5"
+                    >
+                      <div className="flex flex-col items-center min-w-0">
+                        {/* Profile Image */}
+                        <div className="student-about-avatar-ring mb-4">
+                          <div className="w-36 h-36 rounded-full overflow-hidden aspect-square bg-white">
                             {member.image ? (
-                              <img 
-                                src={member.image} 
-                                alt={member.name} 
+                              <img
+                                src={member.image}
+                                alt={member.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
                                   e.target.style.display = 'none';
                                   e.target.parentNode.innerHTML = `
-                                    <div class="w-full h-full flex items-center justify-center text-4xl itf-about-accent font-medium">
+                                    <div class="w-full h-full flex items-center justify-center text-4xl font-medium" style="color: #28b8f0;">
                                       ${member.name.charAt(0)}
                                     </div>`;
                                 }}
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-4xl itf-about-accent font-medium">
+                              <div className="w-full h-full flex items-center justify-center text-4xl font-medium student-about-accent">
                                 {member.name.charAt(0)}
                               </div>
                             )}
                           </div>
                         </div>
-                        <h4 className="itf-about-heading itf-about-ink text-xl font-semibold">{member.name}</h4>
-                        <p className="font-medium mt-1 opacity-80">{member.role}</p>
-                        <p className="mt-3 opacity-70">{member.bio}</p>
-                        <div className="flex flex-col items-center space-y-2 mt-4 text-sm">
-                          <div className="flex items-center">
-                            <FaEnvelope className="mr-2 itf-about-accent" />
-                            <a href={`mailto:${member.email}`} className="hover:opacity-100 opacity-80 transition-opacity">{member.email}</a>
+
+                        {/* Name and Role */}
+                        <h4 className="student-about-heading text-xl font-semibold">
+                          {member.name}
+                        </h4>
+
+                        <p className="font-medium mt-1 opacity-80">
+                          {member.role}
+                        </p>
+
+                        <p className="mt-3 opacity-70">
+                          {member.bio}
+                        </p>
+
+                        {/* Contact Details */}
+                        <div className="flex flex-col items-center gap-2 mt-4 w-full min-w-0 text-sm">
+                          <div className="student-about-email-row">
+                            <FaEnvelope className="student-about-icon" />
+
+                            <a
+                              href={`mailto:${member.email}`}
+                              className="student-about-email"
+                              title={member.email}
+                            >
+                              {member.email}
+                            </a>
                           </div>
-                          <div className="flex items-center">
-                            <FaPhone className="mr-2 itf-about-accent" />
-                            <span className="opacity-80">{member.phone}</span>
+
+                          <div className="flex items-center justify-center gap-2">
+                            <FaPhone className="student-about-icon" />
+
+                            <span className="opacity-80 whitespace-nowrap">
+                              {member.phone}
+                            </span>
                           </div>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
 
-              {/* Project Guide Section */}
-              <div className="itf-about-glass p-8 mb-10 itf-about-reveal d3">
-                <h3 className="itf-about-heading itf-about-ink text-2xl font-bold mb-4 text-center">Project Guide</h3>
+              {/* Project Guide */}
+              <section className="student-about-guide p-6 sm:p-8 mb-10">
+                <h3 className="student-about-heading text-2xl font-bold mb-4 text-center">
+                  Project Guide
+                </h3>
+
                 <div className="text-center">
-                  <p className="text-xl font-semibold opacity-90">Dr. Vaishali S. Tidake</p>
+                  <p className="text-xl font-semibold opacity-90">
+                    Dr. Vaishali S. Tidake
+                  </p>
                 </div>
-              </div>
+              </section>
             </div>
           </div>
         </div>

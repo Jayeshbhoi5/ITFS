@@ -3,20 +3,22 @@ import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import ActivityUploadForm from './ActivityUploadForm';
 import { getDarkModeFromStorage, setDarkModeInStorage } from './darkModeUtils';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from "../../firebaseConfig";
 import { useUserSession } from '../../UserSessionContext';
 import DepartmentSelectionModal from '../../components/DepartmentSelectionModal';
+import Toast from '../../components/Toast';
 
 const UploadActivity = () => {
   // State management
   const [darkMode, setDarkMode] = useState(getDarkModeFromStorage());
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => { try { return JSON.parse(sessionStorage.getItem('sidebarOpen')) || false; } catch { return false; } });
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showDeptModal, setShowDeptModal] = useState(false);
   const [deptEditMode, setDeptEditMode] = useState(false);
-  const { user } = useUserSession();
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const { user, setUser } = useUserSession();
   useEffect(() => {
     if (!user?.uid || !user?.department) {
       console.warn('User data incomplete - may cause upload issues');
@@ -75,6 +77,30 @@ const UploadActivity = () => {
     }
   };
 
+  const handleDepartmentSubmit = async (data) => {
+    if (!user) return;
+    const userRef = doc(db, 'users', user.uid);
+
+    // Close modal instantly with ZERO delay & show toast immediately
+    setShowDeptModal(false);
+    setDeptEditMode(false);
+    setToast({ show: true, message: 'Department updated successfully!', type: 'success' });
+
+    if (setUser) {
+      setUser({ ...user, departments: data.departments, primaryDepartment: data.primaryDepartment });
+    }
+
+    try {
+      await updateDoc(userRef, {
+        departments: data.departments,
+        primaryDepartment: data.primaryDepartment,
+      });
+    } catch (err) {
+      console.error('Error updating department in Firestore:', err);
+      setToast({ show: true, message: 'Failed to update department.', type: 'error' });
+    }
+  };
+
   // Dark mode effect
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -91,14 +117,24 @@ const UploadActivity = () => {
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-800'} transition-colors duration-300`}>
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          darkMode={darkMode}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
       {/* Department Selection Modal */}
       <DepartmentSelectionModal
         isOpen={showDeptModal}
         onClose={() => setShowDeptModal(false)}
-        onSubmit={() => setShowDeptModal(false)}
+        onSubmit={handleDepartmentSubmit}
         userType={user?.role === 'Faculty' ? 'faculty' : 'student'}
         currentDepartments={user?.departments || []}
-        canEdit={user?.role === 'Faculty' ? true : (user?.departmentChangeCount < 1 || (!user?.departments || user?.departments.length === 0))}
+        currentPrimaryDepartment={user?.primaryDepartment || user?.departments?.[0] || ''}
+        canEdit={true}
+        darkMode={darkMode}
       />
       <Navbar 
         darkMode={darkMode}
@@ -111,7 +147,7 @@ const UploadActivity = () => {
         onEditDepartment={handleEditDepartment}
       />
 
-      <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}>
+      <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out page-smooth-enter`}>
         <ActivityUploadForm 
           darkMode={darkMode} 
           onUpload={handleActivityUpload}

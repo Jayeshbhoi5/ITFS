@@ -35,7 +35,8 @@ export const uploadToCloudinary = async (file) => {
       url: data.secure_url,
       publicId: data.public_id,
       format: data.format,
-      type: data.resource_type
+      type: data.resource_type,
+      pages: data.pages || 1
     };
   } catch (error) {
     console.error('Error in uploadToCloudinary:', error);

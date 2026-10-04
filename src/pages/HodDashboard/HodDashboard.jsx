@@ -17,7 +17,7 @@ const HodDashboard = () => {
   const location = useLocation();
   const [facultyInDept, setFacultyInDept] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => { try { return JSON.parse(sessionStorage.getItem('sidebarOpen')) || false; } catch { return false; } });
   const [activeView, setActiveView] = useState('performance');
   const [selectedFacultyId, setSelectedFacultyId] = useState(null);
   const [darkMode, setDarkMode] = useState(getDarkModeFromStorage());
@@ -110,7 +110,7 @@ const HodDashboard = () => {
         <main className={`flex-1 overflow-x-hidden overflow-y-auto transition-all duration-300 ease-in-out ${
           sidebarOpen ? 'ml-64' : 'ml-16'
         }`}>
-          <div className="p-6 pt-20">
+          <div className="p-6 pt-20 page-smooth-enter">
             <div className="px-6">
               {selectedFacultyId ? (
                 <>
