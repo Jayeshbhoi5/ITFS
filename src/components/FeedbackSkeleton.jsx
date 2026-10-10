@@ -98,7 +98,7 @@ export const SkeletonStyles = () => (
  */
 export const ActivityListSkeleton = ({ count = 5, darkMode = false }) => {
   return (
-    <div className="space-y-3 px-3 py-3 w-full animate-fade-in">
+    <div className="space-y-2 w-full animate-fade-in">
       <SkeletonStyles />
       {[...Array(count)].map((_, idx) => (
         <div

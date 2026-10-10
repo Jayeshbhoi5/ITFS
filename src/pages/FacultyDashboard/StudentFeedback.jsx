@@ -1840,16 +1840,16 @@ const handleDeleteConfirm = async () => {
         </div>
       )}
 
-      <div className={`p-5 lg:p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out page-smooth-enter`}>
+      <div className={`p-5 lg:p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out fast-fade-in`}>
         <div className="flex flex-col lg:flex-row items-start gap-5 lg:gap-6">
           {/* ── Left panel: strictly locked/sticky, internal scroll only ── */}
-          <div className={`activities-left-panel w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-18 z-10 rounded-2xl border flex-col overflow-hidden ${
+          <div className={`activities-left-panel w-full lg:w-80 flex-shrink-0 lg:sticky z-10 rounded-2xl border flex-col overflow-hidden ${
             showMobileDetail ? 'hidden lg:flex' : 'flex'
           } ${
             darkMode
               ? 'bg-gray-800 border-gray-700 shadow-lg'
               : 'bg-white border-slate-200/80 shadow-md'
-          }`} style={{ maxHeight: 'calc(100vh - 3.5rem)', height: 'calc(100vh - 3.5rem)' }}>
+          }`} style={{ maxHeight: 'calc(100vh - 3.5rem)', height: 'calc(100vh - 3.5rem)', top: '5.25rem' }}>
             {/* Panel header — fixed inside panel */}
             <div className={`px-4 py-4 flex-shrink-0 border-b ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-slate-100 bg-slate-50/80'}`}>
               <div className="flex items-center gap-2">
@@ -1927,7 +1927,9 @@ const handleDeleteConfirm = async () => {
             
             {/* Scrollable activity list */}
             {loading ? (
-              <ActivityListSkeleton count={6} darkMode={darkMode} />
+              <div className="activities-container activity-panel-scroll flex-1 px-3 py-3 space-y-2">
+                <ActivityListSkeleton count={6} darkMode={darkMode} />
+              </div>
             ) : activities.length > 0 ? (
               <div className="activities-container activity-panel-scroll flex-1 px-3 py-3 space-y-2">
                 {activities.map((activity, idx) => {
@@ -2073,7 +2075,16 @@ const handleDeleteConfirm = async () => {
           
           {loading ? (
             <div className="hidden lg:flex flex-1 min-w-0">
-              <FeedbackDetailSkeleton darkMode={darkMode} />
+              <div
+                className={`rounded-2xl shadow-lg overflow-hidden border flex flex-col relative w-full ${
+                  darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 shadow-sm'
+                }`}
+                style={{ maxHeight: 'calc(100vh - 3.5rem)', height: 'calc(100vh - 3.5rem)' }}
+              >
+                <div className="flex-1 overflow-y-auto activity-panel-scroll">
+                  <FeedbackDetailSkeleton darkMode={darkMode} />
+                </div>
+              </div>
             </div>
           ) : selectedActivity ? (
             <div className={`w-full lg:flex-1 min-w-0 animate-fade-in-up ${showMobileDetail ? 'block' : 'hidden lg:block'}`} key={selectedActivity.id}>
