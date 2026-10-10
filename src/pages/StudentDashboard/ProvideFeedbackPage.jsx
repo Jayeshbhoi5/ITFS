@@ -10,6 +10,7 @@ import Sidebar from './StudentSidebar';
 import { serverTimestamp } from "firebase/firestore";
 import { useActivityUserStatus } from './ActivityUserStatusManager';
 import { getAuth } from 'firebase/auth';
+import { ProvideFeedbackSkeleton } from '../../components/FeedbackSkeleton';
 
 const auth = getAuth();
 
@@ -874,6 +875,15 @@ const ProvideFeedbackPage = () => {
   const [submitted, setSubmitted] = useState(false);
   const [formErrors, setFormErrors] = useState({});
 
+  // Auto-close / auto-redirect after 3.5 seconds when feedback is submitted to 'All' activities
+  useEffect(() => {
+    if (!submitted) return;
+    const timer = setTimeout(() => {
+      navigate('/AllActivitiesPage?tab=all', { state: { feedbackSubmitted: true } });
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, [submitted, navigate]);
+
   const handleRatingChange = (category, value) => {
     setFormData(prev => ({
       ...prev,
@@ -1048,11 +1058,6 @@ const handleSubmit = async (e) => {
       comments: '',
       suggestions: ''
     });
-
-    // Redirect after delay
-    setTimeout(() => {
-      navigate('/AllActivitiesPage?tab=submitted');
-    }, 2000);
 
   } catch (error) {
     console.error('Error submitting feedback:', error);
@@ -1325,10 +1330,8 @@ const handleSubmit = async (e) => {
           toggleDarkMode={toggleDarkMode}
           activePage="activities"
         />
-        <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}>
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
+        <div className={`p-4 sm:p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}>
+          <ProvideFeedbackSkeleton darkMode={darkMode} />
         </div>
       </div>
     );
@@ -1402,10 +1405,10 @@ const handleSubmit = async (e) => {
       />
 
       {/* Success Modal - placed at root level for true screen centering */}
-      {submitted && (
+      {submitted && createPortal(
         <div 
           className="fixed inset-0 flex items-center justify-center bg-transparent z-50 pointer-events-auto"
-          onClick={() => navigate('/AllActivitiesPage', { state: { feedbackSubmitted: true } })}
+          onClick={() => navigate('/AllActivitiesPage?tab=all', { state: { feedbackSubmitted: true } })}
         >
           <div 
             className={`relative p-8 rounded-2xl shadow-2xl border max-w-md w-full mx-4 animate-scale-in ${
@@ -1416,7 +1419,7 @@ const handleSubmit = async (e) => {
             {/* Close button */}
             <button
               type="button"
-              onClick={() => navigate('/AllActivitiesPage', { state: { feedbackSubmitted: true } })}
+              onClick={() => navigate('/AllActivitiesPage?tab=all', { state: { feedbackSubmitted: true } })}
               className={`absolute top-4 right-4 p-1.5 rounded-full transition-colors cursor-pointer ${
                 darkMode 
                   ? 'text-gray-400 hover:text-white hover:bg-gray-700' 
@@ -1442,7 +1445,7 @@ const handleSubmit = async (e) => {
                 <p className="text-center mt-2">Your feedback has been submitted successfully.</p>
               )}
               <button
-                onClick={() => navigate('/AllActivitiesPage', { 
+                onClick={() => navigate('/AllActivitiesPage?tab=all', { 
                   state: { feedbackSubmitted: true } 
                 })}
                 className="mt-6 px-6 py-2.5 text-white font-medium rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer hover:brightness-110"
@@ -1452,7 +1455,8 @@ const handleSubmit = async (e) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out page-smooth-enter`}>

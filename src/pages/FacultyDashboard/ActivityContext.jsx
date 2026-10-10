@@ -7,12 +7,24 @@ const ActivityContext = createContext();
 
 export const ActivityProvider = ({ children }) => {
   const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { user } = useUserSession();
 
   // Real-time updates for activities
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setActivities([]);
+      setLoading(false);
+      return;
+    }
 
+    if (user.role === 'Student' && (!user.departments || user.departments.length === 0)) {
+      setActivities([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     let unsubscribe;
     
     try {
@@ -30,6 +42,10 @@ export const ActivityProvider = ({ children }) => {
             ...doc.data()
           }));
           setActivities(fetchedActivities);
+          setLoading(false);
+        }, (error) => {
+          console.error("Error fetching faculty activities:", error);
+          setLoading(false);
         });
       } 
       else if (user.role === 'Student') {
@@ -45,10 +61,17 @@ export const ActivityProvider = ({ children }) => {
             ...doc.data()
           }));
           setActivities(fetchedActivities);
+          setLoading(false);
+        }, (error) => {
+          console.error("Error fetching student activities:", error);
+          setLoading(false);
         });
+      } else {
+        setLoading(false);
       }
     } catch (error) {
       console.error("Error setting up real-time listener:", error);
+      setLoading(false);
     }
 
     return () => {
@@ -92,6 +115,7 @@ export const ActivityProvider = ({ children }) => {
   return (
     <ActivityContext.Provider value={{ 
       activities, 
+      loading,
       addActivity,
       verifyActivityOwnership
     }}>

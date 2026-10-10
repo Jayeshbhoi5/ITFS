@@ -880,7 +880,7 @@ const SignupPage = ({ onClose, toggleLogin }) => {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="hidden md:block w-1/2 relative">
-            <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" />
+            <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" loading="eager" decoding="sync" />
             <div className="absolute inset-0 itf-modal-caption" />
             <div className="absolute bottom-5 left-5 right-5">
               <p className="itf-heading text-white text-lg font-semibold">KBTCOE</p>
@@ -890,7 +890,7 @@ const SignupPage = ({ onClose, toggleLogin }) => {
           <div className="w-full md:w-1/2 pl-4 pt-3.5 pb-2.5 pr-1.5 md:pl-5 md:pt-4 md:pb-3 md:pr-2 flex flex-col h-full min-h-0 bg-white">
             <div className="flex items-start justify-between mb-8 shrink-0 pr-2.5 md:pr-3">
               <div className="flex items-center gap-3">
-                <img src="/5.png" alt="KBTCOE Logo" className="w-11 h-11 bg-white object-contain p-1 flex-shrink-0" />
+                <img src="/5.png" alt="KBTCOE Logo" className="w-11 h-11 bg-white object-contain p-1 flex-shrink-0" loading="eager" decoding="sync" />
                 <div>
                   <h2 className="itf-heading text-xl md:text-2xl font-bold text-sky-900 leading-tight">Create Account</h2>
                   <p className="text-sky-600 text-xs mt-0.5">Sign up with your organization email</p>

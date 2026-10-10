@@ -241,7 +241,7 @@ const ForgotPassword = ({ onClose, toggleLogin }) => {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="hidden md:block w-1/2 relative">
-            <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" />
+            <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" loading="eager" decoding="sync" />
             <div className="absolute inset-0 itf-modal-caption" />
             <div className="absolute bottom-5 left-5 right-5">
               <p className="itf-heading text-white text-lg font-semibold">KBTCOE</p>
@@ -251,7 +251,7 @@ const ForgotPassword = ({ onClose, toggleLogin }) => {
           <div className="w-full md:w-1/2 p-6 flex flex-col justify-center h-full overflow-hidden">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <img src="/5.png" alt="KBTCOE Logo" className="w-12 h-13 bg-white object-contain p-1 flex-shrink-0" />
+                <img src="/5.png" alt="KBTCOE Logo" className="w-12 h-13 bg-white object-contain p-1 flex-shrink-0" loading="eager" decoding="sync" />
                 <div>
                   <h2 className="itf-heading text-2xl font-bold text-sky-900 leading-tight">Reset Password</h2>
                   <p className="text-sky-600 text-xs mt-0.5">We'll email you a secure reset link</p>

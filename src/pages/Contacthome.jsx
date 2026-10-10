@@ -199,7 +199,16 @@ export default function Contacthome() {
       {/* College Header Banner */}
       <div className="relative z-10 w-full py-4 border-b border-sky-100/70">
         <div className="container mx-auto max-w-screen-lg flex flex-col md:flex-row items-center justify-center px-4 text-center">
-          <img src="/5.png" alt="KBTCOE Logo" className="h-20 w-24 mx-7 mb-6 md:mb-0 object-contain shrink-0" loading="eager" decoding="async" fetchpriority="high" width="96" height="64" />
+          <img
+            src="/5.png"
+            alt="KBTCOE Logo"
+            className="h-20 w-24 mx-7 mb-6 md:mb-0 object-contain shrink-0"
+            loading="eager"
+            decoding="sync"
+            fetchpriority="high"
+            width="96"
+            height="64"
+          />
           <div className="text-center flex-1 w-full">
             <h2 className="itf-heading text-sky-700 font-semibold text-lg md:text-xl">
               Maratha Vidya Prasarak Samaj's
@@ -211,10 +220,10 @@ export default function Contacthome() {
               Udoji Maratha Boarding Campus, Near Pumping Station, Gangapur Road, Nashik
             </p>
             <p className="text-sky-500 text-xs md:text-sm">
-              An Autonomous Institute Permanently affiliated to Savitribai Phule Pune University
+              "An Autonomous Institute Permanently affiliated to Savitribai Phule Pune University"
             </p>
           </div>
-          <div className="flex items-center mt-2 md:mt-0">
+           <div className="flex items-center mt-2 md:mt-0">
             <img src="/6.png" alt="Accreditation Badges" className="h-12 w-auto mx-2" />
             <img src="/7.png" alt="Accreditation Badges" className="h-12 w-auto mx-0" />
           </div>
@@ -340,7 +349,7 @@ export default function Contacthome() {
               <div className="itf-modal-strip" />
               <div className="flex flex-1 min-h-0">
                 <div className="hidden md:block w-1/2 relative">
-                  <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" />
+                  <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" loading="eager" decoding="sync" />
                   <div className="absolute inset-0 itf-modal-caption" />
                   <div className="absolute bottom-5 left-5 right-5">
                     <p className="itf-heading text-white text-lg font-semibold">KBTCOE</p>
@@ -350,7 +359,7 @@ export default function Contacthome() {
                 <div className="w-full md:w-1/2 p-6 flex flex-col justify-center h-full overflow-hidden">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <img src="/5.png" alt="KBTCOE Logo" className="w-12 h-13 bg-white object-contain p-1 flex-shrink-0" />
+                      <img src="/5.png" alt="KBTCOE Logo" className="w-12 h-13 bg-white object-contain p-1 flex-shrink-0" loading="eager" decoding="sync" />
                       <div>
                         <h2 className="itf-heading text-2xl font-bold text-sky-900 leading-tight">Welcome Back</h2>
                         <p className="text-sky-600 text-xs mt-0.5">Log in to continue to your dashboard</p>
@@ -373,7 +382,7 @@ export default function Contacthome() {
               <div className="itf-modal-strip" />
               <div className="flex flex-1 min-h-0">
                 <div className="hidden md:block w-1/2 relative">
-                  <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" />
+                  <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" loading="eager" decoding="sync" />
                   <div className="absolute inset-0 itf-modal-caption" />
                   <div className="absolute bottom-5 left-5 right-5">
                     <p className="itf-heading text-white text-lg font-semibold">KBTCOE</p>
@@ -383,7 +392,7 @@ export default function Contacthome() {
                 <div className="w-full md:w-1/2 pl-4 pt-3.5 pb-2.5 pr-1.5 md:pl-5 md:pt-4 md:pb-3 md:pr-2 flex flex-col h-full min-h-0 bg-white">
                   <div className="flex items-start justify-between mb-8 shrink-0 pr-2.5 md:pr-3">
                     <div className="flex items-center gap-3">
-                      <img src="/5.png" alt="KBTCOE Logo" className="w-11 h-11 bg-white object-contain p-1 flex-shrink-0" />
+                      <img src="/5.png" alt="KBTCOE Logo" className="w-11 h-11 bg-white object-contain p-1 flex-shrink-0" loading="eager" decoding="sync" />
                       <div>
                         <h2 className="itf-heading text-xl md:text-2xl font-bold text-sky-900 leading-tight">Create Account</h2>
                         <p className="text-sky-600 text-xs mt-0.5">Sign up with your organization email</p>
@@ -408,7 +417,7 @@ export default function Contacthome() {
               <div className="itf-modal-strip" />
               <div className="flex flex-1 min-h-0">
                 <div className="hidden md:block w-1/2 relative">
-                  <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" />
+                  <img src="/8.png" alt="KBTCOE Campus" className="w-full h-full object-cover" loading="eager" decoding="sync" />
                   <div className="absolute inset-0 itf-modal-caption" />
                   <div className="absolute bottom-5 left-5 right-5">
                     <p className="itf-heading text-white text-lg font-semibold">KBTCOE</p>
@@ -418,7 +427,7 @@ export default function Contacthome() {
                 <div className="w-full md:w-1/2 p-6 flex flex-col justify-center h-full overflow-hidden">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <img src="/5.png" alt="KBTCOE Logo" className="w-12 h-13 bg-white object-contain p-1 flex-shrink-0" />
+                      <img src="/5.png" alt="KBTCOE Logo" className="w-12 h-13 bg-white object-contain p-1 flex-shrink-0" loading="eager" decoding="sync" />
                       <div>
                         <h2 className="itf-heading text-2xl font-bold text-sky-900 leading-tight">Reset Password</h2>
                         <p className="text-sky-600 text-xs mt-0.5">We'll email you a secure reset link</p>

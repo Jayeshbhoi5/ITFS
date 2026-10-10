@@ -69,8 +69,11 @@ const AuthActionHandler = () => {
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, loading } = useUserSession();
 
+  if (loading) {
+    return children;
+  }
+
   if (!user) {
-    if (loading) return children;
     return <Navigate to="/login" replace />;
   }
 
@@ -81,6 +84,11 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   const userRole = (user.role || '').toLowerCase();
   const targetRole = (requiredRole || '').toLowerCase();
+
+  // If role is still 'unknown' (fetching profile), do not redirect to wrong dashboard!
+  if (!userRole || userRole === 'unknown') {
+    return children;
+  }
 
   if (requiredRole && userRole !== targetRole) {
     const dashboardPath = userRole === 'faculty' ? '/faculty-dashboard' :
@@ -112,12 +120,48 @@ const RoleBasedAboutRedirect = () => {
   }
 };
 
+const isPublicRoute = (pathname) => {
+  const normalized = (pathname || '').toLowerCase();
+  return (
+    normalized === '/' ||
+    normalized === '/abouthome' ||
+    normalized === '/contacthome' ||
+    normalized === '/signup' ||
+    normalized === '/forgotpassword' ||
+    normalized === '/reset-password' ||
+    normalized === '/verify-email' ||
+    normalized === '/login' ||
+    normalized === '/auth/action' ||
+    normalized === '/__/auth/action'
+  );
+};
+
+const RouteThemeManager = ({ sessionDarkMode }) => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (isPublicRoute(pathname)) {
+      // Public / Home screens must always stay strictly in Light Mode
+      document.documentElement.classList.remove('dark');
+    } else {
+      // Authenticated dashboards / session pages apply user's session preference
+      if (sessionDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, [pathname, sessionDarkMode]);
+
+  return null;
+};
+
 const RoleBasedContactRedirect = ({ darkMode }) => {
   const { user, loading } = useUserSession();
 
   if (!user) {
     if (loading) return null;
-    return <Contacthome darkMode={darkMode} />;
+    return <Contacthome darkMode={false} />;
   }
 
   switch (user.role) {
@@ -128,7 +172,7 @@ const RoleBasedContactRedirect = ({ darkMode }) => {
     case 'HOD':
       return <HodContactUs darkMode={darkMode} />;
     default:
-      return <Contacthome darkMode={darkMode} />;
+      return <Contacthome darkMode={false} />;
   }
 };
 
@@ -156,7 +200,6 @@ const App = () => {
 
   useEffect(() => {
     setDarkModeInStorage(darkMode);
-    document.documentElement.classList.toggle('dark', darkMode);
   }, [darkMode]);
 
   useEffect(() => {
@@ -179,16 +222,17 @@ const App = () => {
       <ActivityUserStatusProvider>
         <Router>
           <ScrollToTop />
+          <RouteThemeManager sessionDarkMode={darkMode} />
           <AuthWelcomeToast />
           <Routes>
             <Route path="/" element={<Homepage />} />
             <Route path="/about" element={<RoleBasedAboutRedirect />} />
             <Route path="/faculty-about" element={<AuthRedirect><AboutUs darkMode={darkMode} /></AuthRedirect>} />
             <Route path="/student-about" element={<StudentAboutUs darkMode={darkMode} />} />
-            <Route path="/abouthome" element={<Abouthome darkMode={darkMode} />} />
-            <Route path="/contacthome" element={<Contacthome darkMode={darkMode} />} />
+            <Route path="/abouthome" element={<Abouthome darkMode={false} />} />
+            <Route path="/contacthome" element={<Contacthome darkMode={false} />} />
             <Route path="/signup" element={<SignupPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage darkMode={darkMode} />} />
+            <Route path="/verify-email" element={<VerifyEmailPage darkMode={false} />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/auth/action" element={<AuthActionHandler />} />
             <Route path="/__/auth/action" element={<AuthActionHandler />} />

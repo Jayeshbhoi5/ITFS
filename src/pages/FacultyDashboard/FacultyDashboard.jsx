@@ -11,6 +11,7 @@ import { useUserSession } from '../../UserSessionContext';
 import { FaStarHalfAlt, FaStar, FaRegStar } from 'react-icons/fa';
 import DepartmentSelectionModal from '../../components/DepartmentSelectionModal';
 import Toast from '../../components/Toast';
+import { FacultyDashboardSkeleton } from '../../components/FeedbackSkeleton';
 
 /*
   Background theme: "Skyline Mist"
@@ -293,7 +294,7 @@ const FacultyDashboard = () => {
             feedbackCount: feedbackComments.length,
             branch: data.className || 'Unknown',
             year: data.academicYear || 'Unknown',
-            image: data.mainImage || (data.fileUrls && data.fileUrls.length > 0 ? data.fileUrls[0].url : 'https://via.placeholder.com/300x200?text=No+Image')
+            image: data.mainImage || (data.fileUrls && data.fileUrls.length > 0 ? data.fileUrls[0].url : 'https://placehold.co/600x400/lightgray/white?text=Activity')
           };
         });
 
@@ -512,7 +513,9 @@ const FacultyDashboard = () => {
           <div className="flex justify-center items-center h-96 text-xl font-semibold">Please select your department to continue.</div>
         ) : (
           <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out page-smooth-enter`}>
-            {!loading && (
+            {loading ? (
+              <FacultyDashboardSkeleton darkMode={darkMode} />
+            ) : (
               <>
                 {/* Activity Carousel with Feedback */}
                 <div className="mb-3">

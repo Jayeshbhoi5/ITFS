@@ -12,6 +12,8 @@ import { db, auth } from '../../firebaseConfig';
 import { useUserSession } from '../../UserSessionContext';
 import { computeCurrentYearAndAcademic, getCurrentAcademicYear } from '../../components/DepartmentSelectionModal';
 import DepartmentSelectionModal from '../../components/DepartmentSelectionModal';
+import { AllActivitiesSkeleton } from '../../components/FeedbackSkeleton';
+import EmptyActivitiesState from '../../components/EmptyActivitiesState';
 
 // Helper to determine the student's current/default year (FE/SE/TE/BE)
 export const getStudentDefaultYear = (userData) => {
@@ -205,11 +207,13 @@ const ActivityThumbnail = ({ src, alt, darkMode, className = "" }) => {
     };
   }, [src, isPdf]);
 
-  const handleImageError = () => {
+  const handleImageError = (e) => {
     if (isPdf) {
       setLoadError(true);
-    } else {
+    } else if (thumbUrl !== 'https://placehold.co/600x400/lightgray/white?text=Activity') {
       setThumbUrl('https://placehold.co/600x400/lightgray/white?text=Activity');
+    } else if (e?.target) {
+      e.target.style.display = 'none';
     }
   };
 
@@ -868,13 +872,13 @@ const AllActivitiesPage = () => {
   };
   
   // Get activities from context
-  const { activities: contextActivities, refreshActivities } = useActivities();
+  const { activities: contextActivities, loading: contextLoading, refreshActivities } = useActivities();
 
   // Get dark mode from storage
   const [darkMode, setDarkMode] = useState(getDarkModeFromStorage());
   
   // Get user session for default filter values
-  const { user, setUser } = useUserSession();
+  const { user, setUser, loading: userLoading } = useUserSession();
 
   // Get user status context
   const { submittedActivities = [], isActivitySubmitted = () => false, loading: statusLoading = false } = useActivityUserStatus() || {};
@@ -1089,6 +1093,12 @@ const AllActivitiesPage = () => {
   // Process activities from context
   useEffect(() => {
     const processActivities = async () => {
+      // If context or user session is still loading, maintain skeleton loading state
+      if (contextLoading || userLoading || statusLoading) {
+        setLoading(true);
+        return;
+      }
+
       if (contextActivities && contextActivities.length > 0) {
         try {
           setLoading(true);
@@ -1176,18 +1186,18 @@ const AllActivitiesPage = () => {
           setLoading(false);
         }
       } else {
-        if (!statusLoading) {
-          setLoading(false);
-        }
+        setActivities([]);
+        setLoading(false);
       }
     };
 
     processActivities();
-  }, [contextActivities, statusLoading, isActivitySubmitted]);
+  }, [contextActivities, contextLoading, userLoading, statusLoading, isActivitySubmitted]);
 
-  // Refresh data when returning from feedback submission
+  // Refresh data when returning from feedback submission and ensure activeTab is 'all'
   useEffect(() => {
     if (location.state?.fromActivities || location.state?.feedbackSubmitted) {
+      setActiveTab('all');
       setLoading(true);
       
       // If the context has a refresh function, use it
@@ -2597,10 +2607,10 @@ const AllActivitiesPage = () => {
             </div>
         </div>
         
-        {/* Loading State */}
-        {(loading || statusLoading) && (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        {/* Loading State with image block */}
+        {(loading || contextLoading || userLoading || statusLoading) && (
+          <div className="py-2">
+            <AllActivitiesSkeleton viewMode={viewMode} count={viewMode === 'card' ? 6 : 4} darkMode={darkMode} />
           </div>
         )}
         
@@ -2612,7 +2622,7 @@ const AllActivitiesPage = () => {
         )}
         
         {/* Activities List or Card View */}
-        {!loading && !statusLoading && !error && (
+        {!loading && !contextLoading && !userLoading && !statusLoading && !error && (
           <div className="flex-grow">
             {filteredActivities.length > 0 ? (
               viewMode === 'card' ? (
@@ -2625,11 +2635,11 @@ const AllActivitiesPage = () => {
                 </div>
               )
             ) : (
-              <div className={`text-center p-8 rounded-lg ${
-                darkMode ? 'bg-gray-800' : 'bg-gray-100'
-              }`}>
-                <p className="text-lg">No activities found matching your criteria.</p>
-              </div>
+              <EmptyActivitiesState
+                title="No activities found"
+                darkMode={darkMode}
+                stickerClassName="w-64 h-52 sm:w-80 sm:h-64 md:w-96 md:h-72"
+              />
             )}
           </div>
         )}

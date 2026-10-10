@@ -10,6 +10,7 @@ import Toast from '../../components/Toast';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from "../../firebaseConfig";
 import { useUserSession } from '../../UserSessionContext';
+import { StudentDashboardSkeleton } from '../../components/FeedbackSkeleton';
 
 const StudentDashboard = () => {
   const [darkMode, setDarkMode] = useState(
@@ -19,22 +20,28 @@ const StudentDashboard = () => {
     try { return JSON.parse(sessionStorage.getItem('sidebarOpen')) || false; } catch { return false; }
   });
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState([]);
-  const { user, setUser } = useUserSession();
+  const { user, setUser, loading: userLoading } = useUserSession();
   const [showDeptModal, setShowDeptModal] = useState(false);
   const [deptEditMode, setDeptEditMode] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   
   // Get activities from context
-  const { activities: contextActivities } = useActivities();
+  const { activities: contextActivities, loading: contextLoading } = useActivities();
   
   // Get user status context
-  const { submittedActivities, isActivitySubmitted, loading: statusLoading } = useActivityUserStatus() || {};
+  const { submittedActivities, isActivitySubmitted, loading: statusLoading = false } = useActivityUserStatus() || {};
   
   // Process activities from context to calculate metrics
   useEffect(() => {
-    if (contextActivities && contextActivities.length > 0) {
+    // If context or user session is still loading, keep skeleton active
+    if (userLoading || contextLoading || statusLoading) {
+      setLoading(true);
+      return;
+    }
+
+    if (contextActivities) {
       // Process the activities similar to AllActivitiesPage
       const processedActivities = contextActivities.map(activity => {
         const submitted = isActivitySubmitted ? isActivitySubmitted(activity.id) : false;
@@ -53,10 +60,10 @@ const StudentDashboard = () => {
       
       setActivities(processedActivities);
       setLoading(false);
-    } else if (!statusLoading) {
+    } else {
       setLoading(false);
     }
-  }, [contextActivities, statusLoading, isActivitySubmitted]);
+  }, [contextActivities, contextLoading, statusLoading, userLoading, isActivitySubmitted]);
   
   // Calculate dashboard metrics from activities
   const calculateDashboardMetrics = () => {
@@ -91,56 +98,8 @@ const StudentDashboard = () => {
     };
   };
   
-  // Sample data for activities that need feedback (fallback if contextActivities is empty)
-  const pendingActivities = activities.length > 0 
-    ? activities.filter(activity => activity.status === 'pending')
-    : [
-        { 
-          id: 1, 
-          title: 'Workshop on IoT', 
-          image: '10.jpg', 
-          description: 'Interactive session on Internet of Things', 
-          branch: 'Computer Science', 
-          year: '3rd Year',
-          faculty: 'Prof. Sharma'
-        },
-        { 
-          id: 2, 
-          title: 'Python Programming', 
-          image: '10.jpg', 
-          description: 'Hands-on programming workshop', 
-          branch: 'Information Technology', 
-          year: '2nd Year',
-          faculty: 'Prof. Mehta'
-        },
-        { 
-          id: 3, 
-          title: 'DBMS Practical', 
-          image: '10.jpg', 
-          description: 'Database management system practical session', 
-          branch: 'Computer Science', 
-          year: '2nd Year',
-          faculty: 'Prof. Patel'
-        },
-        { 
-          id: 4, 
-          title: 'Circuit Design', 
-          image: 'https://res.cloudinary.com/dxssqb6l8/image/upload/v1605293735/technologies/circuit_rbjqal.jpg', 
-          description: 'Electronic circuit design workshop', 
-          branch: 'Electronics', 
-          year: '3rd Year',
-          faculty: 'Prof. Gupta'
-        },
-        { 
-          id: 5, 
-          title: 'Machine Learning', 
-          image: 'https://res.cloudinary.com/dxssqb6l8/image/upload/v1605293735/technologies/ml_plak1o.jpg', 
-          description: 'Introduction to machine learning concepts', 
-          branch: 'Computer Science', 
-          year: '4th Year',
-          faculty: 'Prof. Singh'
-        },
-      ];
+  // Activities that need feedback
+  const pendingActivities = activities.filter(activity => activity.status === 'pending');
 
   const dashboardMetrics = calculateDashboardMetrics();
 
@@ -270,7 +229,9 @@ const StudentDashboard = () => {
         <div className="flex justify-center items-center h-96 text-xl font-semibold">Please select your department to continue.</div>
       ) : (
         <div className={`p-6 ${sidebarOpen ? 'ml-64' : 'ml-16'} min-h-screen transition-all duration-300 ease-in-out page-smooth-enter`}>
-          {!loading && !statusLoading && (
+          {(loading || contextLoading || statusLoading || userLoading) ? (
+            <StudentDashboardSkeleton darkMode={darkMode} />
+          ) : (
             <>
               <ActivityCarousel 
                 darkMode={darkMode}

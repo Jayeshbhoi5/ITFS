@@ -10,7 +10,7 @@ const SESSION_CACHE_KEY = 'itfs_user_session';
 
 const readCachedUser = () => {
   try {
-    const raw = sessionStorage.getItem(SESSION_CACHE_KEY);
+    const raw = localStorage.getItem(SESSION_CACHE_KEY) || sessionStorage.getItem(SESSION_CACHE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -20,8 +20,10 @@ const readCachedUser = () => {
 const writeCachedUser = (nextUser) => {
   try {
     if (nextUser?.uid) {
+      localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(nextUser));
       sessionStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(nextUser));
     } else {
+      localStorage.removeItem(SESSION_CACHE_KEY);
       sessionStorage.removeItem(SESSION_CACHE_KEY);
     }
   } catch {
@@ -128,6 +130,7 @@ export const UserSessionProvider = ({ children }) => {
         const TEST_EMAILS = ['a@kbtcoe.org', 'b@kbtcoe.org', 'jwj475.mail@gmail.com'];
         const isTestAccount = TEST_EMAILS.includes((authUser.email || '').toLowerCase());
 
+        const hasKnownRole = Boolean(cachedUser?.role && cachedUser.role !== 'Unknown');
         // Show UI immediately with auth basics; enrich from Firestore in background
         const bootstrapUser = {
           uid: authUser.uid,
@@ -140,7 +143,9 @@ export const UserSessionProvider = ({ children }) => {
           ...(cachedUser?.uid === authUser.uid ? cachedUser : {}),
         };
         setUser(bootstrapUser);
-        setLoading(false);
+        if (hasKnownRole) {
+          setLoading(false);
+        }
 
         try {
           try {

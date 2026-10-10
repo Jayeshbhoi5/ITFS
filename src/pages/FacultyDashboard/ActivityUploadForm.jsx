@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaUpload, FaImage, FaVideo, FaSpinner, FaTimes, FaCheckCircle, FaCalendarAlt, FaBook, FaUser, FaBuilding, FaFilePdf } from 'react-icons/fa';
+import { createPortal } from 'react-dom';
+import { FaUpload, FaImage, FaVideo, FaSpinner, FaTimes, FaCheckCircle, FaCalendarAlt, FaBook, FaUser, FaBuilding, FaFilePdf, FaCheck } from 'react-icons/fa';
 import { useActivities } from './ActivityContext';
 import { uploadToCloudinary } from '../../cloudinaryUtils';
 import { useUserSession } from '../../UserSessionContext';
@@ -152,6 +153,15 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Auto-close success modal after 3.5 seconds if faculty does not manually dismiss it
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const timer = setTimeout(() => {
+      setIsModalOpen(false);
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, [isModalOpen]);
+
   const inputCls = `w-full p-2.5 rounded-xl border text-sm transition-all ${darkMode ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-400' : 'bg-white border-gray-200 text-gray-800 focus:border-blue-500'}`;
   const labelCls = `block mb-1.5 text-xs font-semibold uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`;
   const sectionCls = `rounded-2xl border p-5 mb-5 ${darkMode ? 'bg-gray-800/60 border-gray-700' : 'bg-gray-50 border-gray-100'}`;
@@ -248,18 +258,25 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
                       {user?.departments && user.departments.map(dept => {
                         const isChecked = formData.departments?.includes(dept) || false;
                         return (
-                          <label key={dept} className={`flex items-center px-3 py-2 cursor-pointer text-sm transition-colors ${darkMode ? 'hover:bg-gray-600' : 'hover:bg-blue-50'}`}>
-                            <div className={`w-4 h-4 rounded border flex items-center justify-center mr-2.5 transition-colors flex-shrink-0 ${
-                              isChecked
-                                ? 'border-sky-500 text-white'
-                                : darkMode
-                                  ? 'bg-gray-600 border-gray-500'
-                                  : 'bg-white border-gray-300'
-                            }`}>
+                          <label key={dept} className={`flex items-center px-3 py-2 cursor-pointer text-sm transition-colors ${darkMode ? (isChecked ? 'bg-sky-900/30' : 'hover:bg-gray-600') : (isChecked ? 'bg-sky-50' : 'hover:bg-gray-50')}`}>
+                            <div 
+                              style={{
+                                width: '18px',
+                                height: '18px',
+                                minWidth: '18px',
+                                borderRadius: '4px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginRight: '10px',
+                                backgroundColor: isChecked ? '#0284c7' : (darkMode ? '#374151' : '#ffffff'),
+                                border: isChecked ? '1.5px solid #0284c7' : (darkMode ? '1.5px solid #64748b' : '1.5px solid #cbd5e1'),
+                                transition: 'all 0.15s ease',
+                                flexShrink: 0
+                              }}
+                            >
                               {isChecked && (
-                                <svg className="w-3 h-3 text-white fill-current" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
+                                <FaCheck style={{ color: '#ffffff', fontSize: '11px' }} />
                               )}
                             </div>
                             <input type="checkbox"
@@ -274,7 +291,7 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
                                 });
                               }}
                               className="sr-only" />
-                            <span className={darkMode ? 'text-gray-200' : 'text-gray-800'}>{dept}</span>
+                            <span className={`text-sm select-none ${isChecked ? (darkMode ? 'text-sky-300 font-semibold' : 'text-sky-900 font-semibold') : (darkMode ? 'text-gray-200' : 'text-gray-800')}`}>{dept}</span>
                           </label>
                         );
                       })}
@@ -398,7 +415,7 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
       </div>
 
       {/* Success Modal */}
-      {isModalOpen && (
+      {isModalOpen && createPortal(
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
           <div className={`relative rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
@@ -414,7 +431,8 @@ const ActivityUploadForm = ({ darkMode, onSuccess }) => {
               Done
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

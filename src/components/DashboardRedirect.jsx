@@ -15,6 +15,9 @@ const DashboardRedirect = () => {
   }
 
   const roleLower = (user.role || '').toLowerCase();
+  if (!roleLower || roleLower === 'unknown') {
+    return null;
+  }
   if (roleLower === 'hod') {
     return <Navigate to="/hod-dashboard" replace />;
   }
