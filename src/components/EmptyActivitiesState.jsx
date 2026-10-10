@@ -487,172 +487,206 @@ export const ReviewFeedbackPadIllustration = ({
 
         {/* Bottom Star Rating Ribbon */}
         <g transform="translate(48, 184)" filter="url(#goldGlow)">
-          <rect x="0" y="0" width="164" height="22" rx="11" fill="url(#panGoldGrad)" />
-          <text x="82" y="15" fill="#78350f" fontSize="10" fontWeight="900" fontFamily="system-ui, sans-serif" textAnchor="middle" letterSpacing="0.05em">
-            ★ EXCELLENT OVERALL ★
-          </text>
+          <rect x="0" y="0" width="164" height="22" rx="11" fill="#ffffff" stroke="#fbbf24" strokeWidth="1.6" />
+          {[0, 1, 2, 3, 4].map((i) => (
+            <path
+              key={i}
+              transform={`translate(${16 + i * 26}, 4)`}
+              d="M 6 0.5 L 7.5 4.5 L 12 4.8 L 8.5 7.8 L 9.5 12 L 6 9.8 L 2.5 12 L 3.5 7.8 L 0 4.8 L 4.5 4.5 Z"
+              fill="url(#panGoldGrad)"
+            />
+          ))}
+          <circle cx="148" cy="11" r="4" fill="#10b981" />
         </g>
       </g>
 
-      {/* ── 2. STICKER 3: IMPACT & ACHIEVEMENT CONSOLE (Right Flank) ── */}
-      <g transform="translate(488, 20) rotate(8.5, 0, 218) scale(0.82)" filter="url(#stickerShadow)">
-        {/* Capsule Base */}
+      {/* ── 2. STICKER 3: WIDE IMPACT & GROWTH ACHIEVEMENTS (Right Flank) ── */}
+      <g transform="translate(548, 18) rotate(8.5, 0, 218) scale(0.82)" filter="url(#stickerShadow)">
+        {/* Card Body */}
         <path
-          d="M 32 0 L 228 0 C 246 0, 260 14, 260 32 L 260 186 C 260 204, 246 218, 228 218 L 48 218 C 28 218, 14 204, 14 186 L 14 32 C 14 14, 28 0, 48 0 Z"
+          d="M 32 0 L 228 0 C 246 0, 260 14, 260 32 L 260 186 C 260 204, 246 218, 228 218 L 32 218 C 14 218, 0 204, 0 186 L 0 32 C 0 14, 14 0, 32 0 Z"
           fill="url(#cardBgRight)"
           stroke={darkMode ? "#818cf8" : "#c7d2fe"}
           strokeWidth="2.4"
         />
 
-        {/* Top Header Tag: Impact Hub */}
-        <g transform="translate(24, 14)">
-          <rect x="0" y="0" width="80" height="22" rx="11" fill={darkMode ? "rgba(129,140,248,0.2)" : "#e0e7ff"} />
+        {/* Top Header Tag */}
+        <g transform="translate(20, 14)">
+          <rect x="0" y="0" width="94" height="22" rx="11" fill={darkMode ? "rgba(99,102,241,0.2)" : "#ede9fe"} />
           <circle cx="12" cy="11" r="4" fill="#4f46e5" />
-          <text x="22" y="14.5" fill={darkMode ? "#a5b4fc" : "#3730a3"} fontSize="9.5" fontWeight="800" fontFamily="system-ui, sans-serif" letterSpacing="0.06em">
+          <text x="24" y="14.5" fill={darkMode ? "#a5b4fc" : "#4338ca"} fontSize="9.5" fontWeight="800" fontFamily="system-ui, sans-serif" letterSpacing="0.06em">
             IMPACT
           </text>
 
-          {/* 3 Metric Mini Tags */}
-          <g transform="translate(88, 0)">
-            <rect x="0" y="0" width="46" height="22" rx="11" fill={darkMode ? "#0f172a" : "#ecfdf5"} stroke="#a7f3d0" strokeWidth="1" />
-            <text x="23" y="14.5" fill="#059669" fontSize="9" fontWeight="800" fontFamily="system-ui, sans-serif" textAnchor="middle">
-              +98%
-            </text>
-
-            <rect x="52" y="0" width="46" height="22" rx="11" fill={darkMode ? "#0f172a" : "#e0f2fe"} stroke="#bae6fd" strokeWidth="1" />
-            <text x="75" y="14.5" fill="#0284c7" fontSize="9" fontWeight="800" fontFamily="system-ui, sans-serif" textAnchor="middle">
-              100%
-            </text>
-          </g>
-
-          {/* Achievement Trophy Mini Icon */}
-          <circle cx="212" cy="11" r="11" fill="#f59e0b" />
-          <path d="M 207 7 L 217 7 L 215 12 C 214 14, 210 14, 209 12 Z M 212 14 L 212 16 M 209 16 L 215 16" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
-        </g>
-
-        {/* Mid Console: 3D Bar Graph & Key Metrics */}
-        <g transform="translate(24, 46)">
-          {/* Analytics Chart Surface */}
-          <rect x="0" y="0" width="218" height="74" rx="10" fill={darkMode ? "#0f172a" : "#f8fafc"} stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="1.2" />
-          
-          {/* Chart Background Grid Lines */}
-          <line x1="16" y1="20" x2="202" y2="20" stroke={darkMode ? "#1e293b" : "#edf2f7"} strokeWidth="1" strokeDasharray="3 3" />
-          <line x1="16" y1="40" x2="202" y2="40" stroke={darkMode ? "#1e293b" : "#edf2f7"} strokeWidth="1" strokeDasharray="3 3" />
-          <line x1="16" y1="60" x2="202" y2="60" stroke={darkMode ? "#334155" : "#cbd5e1"} strokeWidth="1.5" />
-
-          {/* 5 Stepped Growth Columns */}
-          {[
-            { x: 30, h: 22, y: 38, grad: "url(#panSkyGrad)" },
-            { x: 65, h: 32, y: 28, grad: "url(#panIndigoGrad)" },
-            { x: 100, h: 42, y: 18, grad: "url(#panEmeraldGrad)" },
-            { x: 135, h: 36, y: 24, grad: "url(#panSkyGrad)" },
-            { x: 170, h: 48, y: 12, grad: "url(#panGoldGrad)" }
-          ].map((bar, i) => (
-            <g key={i}>
-              <rect x={bar.x} y={bar.y} width="16" height={bar.h} rx="4" fill={bar.grad} />
-              <line x1={bar.x + 2} y1={bar.y} x2={bar.x + 14} y2={bar.y} stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
-            </g>
-          ))}
-        </g>
-
-        {/* Bottom Rubric Assessment Checklist */}
-        <g transform="translate(24, 130)">
-          {/* Item 1: Clarity */}
-          <g transform="translate(0, 0)">
-            <circle cx="8" cy="8" r="8" fill="#dcfce7" stroke="#10b981" strokeWidth="1.2" />
-            <path d="M 5 8 L 7 10 L 11 5.5" stroke="#059669" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            <rect x="22" y="4" width="70" height="7" rx="3.5" fill={darkMode ? "#cbd5e1" : "#334155"} />
-            <rect x="110" y="4" width="108" height="7" rx="3.5" fill="url(#panEmeraldGrad)" />
-          </g>
-
-          {/* Item 2: Engagement */}
-          <g transform="translate(0, 18)">
-            <circle cx="8" cy="8" r="8" fill="#e0e7ff" stroke="#6366f1" strokeWidth="1.2" />
-            <path d="M 5 8 L 7 10 L 11 5.5" stroke="#4f46e5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            <rect x="22" y="4" width="82" height="7" rx="3.5" fill={darkMode ? "#cbd5e1" : "#334155"} />
-            <rect x="110" y="4" width="108" height="7" rx="3.5" fill="url(#panIndigoGrad)" />
-          </g>
-
-          {/* Item 3: Innovation */}
-          <g transform="translate(0, 36)">
-            <circle cx="8" cy="8" r="8" fill="#e0f2fe" stroke="#0284c7" strokeWidth="1.2" />
-            <path d="M 5 8 L 7 10 L 11 5.5" stroke="#0284c7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            <rect x="22" y="4" width="60" height="7" rx="3.5" fill={darkMode ? "#cbd5e1" : "#334155"} />
-            <rect x="110" y="4" width="108" height="7" rx="3.5" fill="url(#panSkyGrad)" />
+          {/* Excellence Spark */}
+          <g transform="translate(196, 0)">
+            <circle cx="11" cy="11" r="11" fill="#f59e0b" />
+            <path transform="translate(6, 6)" d="M 5 0.5 L 6.2 3.5 L 9.5 3.8 L 7 6 L 7.8 9.2 L 5 7.5 L 2.2 9.2 L 3 6 L 0.5 3.8 L 3.8 3.5 Z" fill="#ffffff" />
           </g>
         </g>
 
-        {/* Bottom Achievement Badge Strip */}
-        <g transform="translate(48, 184)" filter="url(#cyanGlow)">
-          <rect x="0" y="0" width="164" height="22" rx="11" fill="url(#panSkyGrad)" />
-          <text x="82" y="15" fill="#ffffff" fontSize="10" fontWeight="900" fontFamily="system-ui, sans-serif" textAnchor="middle" letterSpacing="0.05em">
-            ⚡ 100% INNOVATIVE ⚡
+        {/* Donut Ring & 3D Trophy */}
+        <g transform="translate(20, 44)">
+          {/* Donut Progress */}
+          <circle cx="36" cy="36" r="34" fill={darkMode ? "#0f172a" : "#f8fafc"} stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="4" />
+          <circle
+            cx="36"
+            cy="36"
+            r="34"
+            fill="none"
+            stroke="url(#panIndigoGrad)"
+            strokeWidth="5"
+            strokeDasharray="213"
+            strokeDashoffset="22"
+            strokeLinecap="round"
+            transform="rotate(-90 36 36)"
+          />
+          <text x="36" y="34" fill={darkMode ? "#ffffff" : "#0f172a"} fontSize="14" fontWeight="900" fontFamily="system-ui, sans-serif" textAnchor="middle">
+            98%
+          </text>
+          <text x="36" y="47" fill="#4f46e5" fontSize="7.5" fontWeight="800" fontFamily="system-ui, sans-serif" textAnchor="middle" letterSpacing="0.05em">
+            INDEX
+          </text>
+
+          {/* 3D Golden Achievement Trophy */}
+          <g transform="translate(96, -6)" filter="url(#goldGlow)">
+            <circle cx="56" cy="42" r="38" fill={darkMode ? "rgba(251,191,36,0.15)" : "#fef3c7"} stroke="#fde68a" strokeWidth="1.5" />
+            <path d="M 40 24 L 72 24 L 72 44 C 72 54, 40 54, 40 44 Z" fill="url(#panGoldGrad)" stroke="#d97706" strokeWidth="1.5" />
+            <path d="M 33 29 C 26 29, 26 42, 40 42" stroke="#d97706" strokeWidth="3" fill="none" strokeLinecap="round" />
+            <path d="M 79 29 C 86 29, 86 42, 72 42" stroke="#d97706" strokeWidth="3" fill="none" strokeLinecap="round" />
+            <rect x="52" y="54" width="8" height="7" fill="#d97706" />
+            <rect x="44" y="61" width="24" height="6" rx="2.5" fill="#b45309" />
+            <path transform="translate(50, 30)" d="M 6 0.5 L 7.5 4.5 L 12 4.8 L 8.5 7.8 L 9.5 12 L 6 9.8 L 2.5 12 L 3.5 7.8 L 0 4.8 L 4.5 4.5 Z" fill="#ffffff" />
+          </g>
+        </g>
+
+        {/* 5-Bar Ascending Growth Histogram */}
+        <g transform="translate(20, 124)">
+          <rect x="0" y="0" width="220" height="52" rx="8" fill={darkMode ? "#1e293b" : "#f8fafc"} stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="1" />
+          <line x1="12" y1="44" x2="208" y2="44" stroke={darkMode ? "#475569" : "#cbd5e1"} strokeWidth="1.2" />
+
+          <rect x="22" y="30" width="20" height="14" rx="3.5" fill="url(#panSkyGrad)" />
+          <rect x="60" y="24" width="20" height="20" rx="3.5" fill="url(#panSkyGrad)" />
+          <rect x="98" y="17" width="20" height="27" rx="3.5" fill="url(#panIndigoGrad)" />
+          <rect x="136" y="11" width="20" height="33" rx="3.5" fill="url(#panEmeraldGrad)" />
+          <rect x="174" y="5" width="20" height="39" rx="3.5" fill="url(#panGoldGrad)" />
+
+          {/* Golden Growth Trendline */}
+          <path
+            d="M 32 28 Q 78 20, 108 15 T 184 3"
+            stroke="#f59e0b"
+            strokeWidth="2.8"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <circle cx="184" cy="3" r="4" fill="#f59e0b" />
+          <circle cx="184" cy="3" r="2" fill="#ffffff" />
+        </g>
+
+        {/* Achievement Ribbon */}
+        <g transform="translate(44, 184)" filter="url(#indigoGlow)">
+          <rect x="0" y="0" width="168" height="22" rx="11" fill="url(#panIndigoGrad)" />
+          <text x="84" y="15" fill="#ffffff" fontSize="9.5" fontWeight="800" fontFamily="system-ui, sans-serif" textAnchor="middle" letterSpacing="0.06em">
+            TOP 1% EXCELLENCE
           </text>
         </g>
       </g>
 
-      {/* ── 3. STICKER 2: ELEVATED EVALUATION MATRIX TABLET (Center Hero) ── */}
-      <g transform="translate(300, 10)" filter="url(#heroShadow)">
-        {/* Arch Tablet Canvas Base */}
+      {/* ── 3. STICKER 2: ELEVATED EVALUATION TABLET (Center Hero) ── */}
+      <g transform="translate(325, 18) scale(0.86)" filter="url(#heroShadow)">
+        {/* Arched Tablet Base */}
         <path
           d="M 32 0 L 228 0 C 246 0, 260 14, 260 32 L 260 196 C 260 214, 246 228, 228 228 L 32 228 C 14 228, 0 214, 0 196 L 0 32 C 0 14, 14 0, 32 0 Z"
           fill="url(#cardBgCenter)"
           stroke={darkMode ? "#34d399" : "#a7f3d0"}
-          strokeWidth="2.8"
+          strokeWidth="3"
         />
 
-        {/* Metallic Clip Bar */}
-        <rect x="75" y="-6" width="110" height="16" rx="6" fill="#0f172a" opacity="0.3" />
-        <rect x="75" y="-8" width="110" height="16" rx="6" fill="url(#clipMetalGrad)" stroke={darkMode ? "#475569" : "#cbd5e1"} strokeWidth="1" />
-        <circle cx="130" cy="0" r="3" fill="#334155" />
+        {/* Top Emerald Header */}
+        <path
+          d="M 2 32 C 2 15, 15 2, 32 2 L 228 2 C 245 2, 258 15, 258 32 L 258 42 L 2 42 Z"
+          fill={darkMode ? "#064e3b" : "#047857"}
+        />
 
-        {/* Top Floating Badges */}
-        <g transform="translate(18, 18)">
-          <rect x="0" y="0" width="94" height="22" rx="11" fill={darkMode ? "rgba(16,185,129,0.2)" : "#d1fae5"} />
-          <circle cx="12" cy="11" r="4" fill="#059669" />
-          <text x="24" y="14.5" fill={darkMode ? "#6ee7b7" : "#065f46"} fontSize="9.5" fontWeight="800" fontFamily="system-ui, sans-serif" letterSpacing="0.06em">
+        {/* Graduation Cap */}
+        <g transform="translate(22, 11)">
+          <path d="M 12 6 L 24 1 L 36 6 L 24 11 Z" fill="#ffffff" />
+          <path d="M 17 8.5 L 17 15 C 17 18.5, 31 18.5, 31 15 L 31 8.5" fill="#ffffff" />
+          <circle cx="24" cy="6" r="2" fill="#fbbf24" />
+        </g>
+        
+        {/* Evaluation Header Pill */}
+        <g transform="translate(90, 10)">
+          <rect x="0" y="0" width="80" height="22" rx="11" fill="rgba(255,255,255,0.2)" stroke="#ffffff" strokeWidth="1" />
+          <circle cx="12" cy="11" r="4" fill="#34d399" />
+          <text x="46" y="15" fill="#ffffff" fontSize="9.5" fontWeight="800" fontFamily="system-ui, sans-serif" textAnchor="middle" letterSpacing="0.08em">
             EVALUATION
           </text>
+        </g>
 
-          {/* 5-Star Mini Arch */}
-          <g transform="translate(112, 0)">
-            <rect x="0" y="0" width="112" height="22" rx="11" fill={darkMode ? "#0f172a" : "#fef3c7"} stroke="#fbbf24" strokeWidth="1" />
-            {[0, 1, 2, 3, 4].map((i) => (
-              <path
-                key={i}
-                transform={`translate(${8 + i * 20}, 4)`}
-                d="M 6 1 L 7.6 4.6 L 11.2 5 L 8.6 7.6 L 9.3 11.2 L 6 9.4 L 2.7 11.2 L 3.4 7.6 L 0.8 5 L 4.4 4.6 Z"
-                fill="url(#panGoldGrad)"
-              />
-            ))}
+        {/* Lightbulb Spark */}
+        <g transform="translate(224, 13)">
+          <circle cx="8" cy="8" r="7" fill="#fbbf24" />
+          <path d="M 6 12 L 10 12 L 9 15 L 7 15 Z" fill="#ffffff" />
+          <path d="M 8 3 L 8 1 M 13 4 L 14 2 M 3 4 L 2 2" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
+        </g>
+
+        {/* 3 Toggle Switch Checklist Rows */}
+        <g transform="translate(18, 54)">
+          <g transform="translate(0, 0)">
+            <rect x="0" y="2" width="30" height="16" rx="8" fill="#10b981" />
+            <circle cx="21" cy="10" r="6" fill="#ffffff" />
+            <rect x="38" y="4" width="92" height="5" rx="2.5" fill={darkMode ? "#e2e8f0" : "#1e293b"} />
+            <rect x="38" y="12" width="66" height="4" rx="2" fill={darkMode ? "#64748b" : "#94a3b8"} />
+          </g>
+
+          <g transform="translate(0, 24)">
+            <rect x="0" y="2" width="30" height="16" rx="8" fill="#10b981" />
+            <circle cx="21" cy="10" r="6" fill="#ffffff" />
+            <rect x="38" y="4" width="84" height="5" rx="2.5" fill={darkMode ? "#e2e8f0" : "#1e293b"} />
+            <rect x="38" y="12" width="56" height="4" rx="2" fill={darkMode ? "#64748b" : "#94a3b8"} />
+          </g>
+
+          <g transform="translate(0, 48)">
+            <rect x="0" y="2" width="30" height="16" rx="8" fill="#10b981" />
+            <circle cx="21" cy="10" r="6" fill="#ffffff" />
+            <rect x="38" y="4" width="96" height="5" rx="2.5" fill={darkMode ? "#e2e8f0" : "#1e293b"} />
+            <rect x="38" y="12" width="72" height="4" rx="2" fill={darkMode ? "#64748b" : "#94a3b8"} />
           </g>
         </g>
 
-        {/* Dual Feedback Progress Matrix */}
-        <g transform="translate(18, 50)">
-          {/* Card 1: Interactive Learning */}
-          <rect x="0" y="0" width="224" height="36" rx="8" fill={darkMode ? "#0f172a" : "#f8fafc"} stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="1.2" />
-          <circle cx="18" cy="18" r="8" fill="#d1fae5" stroke="#10b981" strokeWidth="1.2" />
-          <path d="M 14.5 18 L 17 20.5 L 21.5 15.5" stroke="#059669" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          <rect x="36" y="10" width="70" height="6" rx="3" fill={darkMode ? "#cbd5e1" : "#334155"} />
-          <rect x="36" y="20" width="45" height="4" rx="2" fill={darkMode ? "#64748b" : "#94a3b8"} />
-          
-          <rect x="120" y="14" width="92" height="8" rx="4" fill={darkMode ? "#334155" : "#e2e8f0"} />
-          <rect x="120" y="14" width="84" height="8" rx="4" fill="url(#panEmeraldGrad)" />
-          <circle cx="204" cy="18" r="6" fill="#ffffff" stroke="#059669" strokeWidth="2" filter="url(#cyanGlow)" />
-        </g>
-
-        <g transform="translate(18, 92)">
-          {/* Card 2: Student Engagement */}
-          <rect x="0" y="0" width="224" height="36" rx="8" fill={darkMode ? "#0f172a" : "#f8fafc"} stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="1.2" />
-          <circle cx="18" cy="18" r="8" fill="#e0f2fe" stroke="#0284c7" strokeWidth="1.2" />
-          <path d="M 14.5 18 L 17 20.5 L 21.5 15.5" stroke="#0284c7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          <rect x="36" y="10" width="85" height="6" rx="3" fill={darkMode ? "#cbd5e1" : "#334155"} />
-          <rect x="36" y="20" width="55" height="4" rx="2" fill={darkMode ? "#64748b" : "#94a3b8"} />
-          
-          <rect x="120" y="14" width="92" height="8" rx="4" fill={darkMode ? "#334155" : "#e2e8f0"} />
-          <rect x="120" y="14" width="76" height="8" rx="4" fill="url(#panSkyGrad)" />
-          <circle cx="196" cy="18" r="6" fill="#ffffff" stroke="#0284c7" strokeWidth="2" filter="url(#cyanGlow)" />
+        {/* Skill Polygon Radar Ring */}
+        <g transform="translate(164, 52)">
+          <circle cx="42" cy="38" r="34" fill={darkMode ? "#0f172a" : "#f8fafc"} stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="3" />
+          <circle
+            cx="42"
+            cy="38"
+            r="34"
+            fill="none"
+            stroke="url(#panEmeraldGrad)"
+            strokeWidth="4"
+            strokeDasharray="213"
+            strokeDashoffset="26"
+            strokeLinecap="round"
+            transform="rotate(-90 42 38)"
+          />
+          <polygon
+            points="42,14 66,24 58,54 26,54 18,24"
+            fill="rgba(52, 211, 153, 0.28)"
+            stroke="#10b981"
+            strokeWidth="1.8"
+          />
+          <polygon
+            points="42,22 58,28 52,48 32,48 26,28"
+            fill="rgba(56, 189, 248, 0.35)"
+            stroke="#0284c7"
+            strokeWidth="1.5"
+          />
+          <circle cx="42" cy="14" r="2.5" fill="#34d399" />
+          <circle cx="66" cy="24" r="2.5" fill="#34d399" />
+          <circle cx="58" cy="54" r="2.5" fill="#34d399" />
+          <circle cx="26" cy="54" r="2.5" fill="#34d399" />
+          <circle cx="18" cy="24" r="2.5" fill="#34d399" />
         </g>
 
         {/* Master Slider Track */}
